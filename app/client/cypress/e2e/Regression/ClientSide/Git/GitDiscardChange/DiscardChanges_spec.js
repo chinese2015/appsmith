@@ -55,7 +55,7 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
       "Default value",
       `{{JSObject1.myFun1()}}`,
     );
-    PageLeftPane.switchSegment(PagePaneSegment.Explorer);
+    PageLeftPane.switchSegment(PagePaneSegment.UI);
     // connect app to git
     gitSync.CreateNConnectToGit();
     gitSync.CreateGitBranch();
@@ -79,29 +79,28 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
     cy.wait("@getPage");
     // discard changes
     gitSync.DiscardChanges();
-    PageLeftPane.expandCollapseItem("Queries/JS");
+    PageLeftPane.switchSegment(PagePaneSegment.Queries);
     // verify query2 is not present
     PageLeftPane.assertAbsence(query2);
   });
 
   it("3. Add new JSObject , discard changes verify JSObject is deleted", () => {
     jsEditor.CreateJSObject('return "Success";');
-    PageLeftPane.expandCollapseItem("Queries/JS");
+    PageLeftPane.switchSegment(PagePaneSegment.JS);
     PageLeftPane.assertPresence(jsObject);
     gitSync.DiscardChanges();
-    PageLeftPane.expandCollapseItem("Queries/JS");
+    PageLeftPane.switchSegment(PagePaneSegment.JS);
     // verify jsObject2 is deleted after discarding changes
     PageLeftPane.assertAbsence(jsObject);
   });
 
   it("4. Delete page2 and trigger discard flow, page2 should be available again", () => {
-    cy.Deletepage(page2);
+    PageList.DeletePage(page2);
     // verify page is deleted
-    //entityExplorer.ExpandCollapseEntity("Pages");
-    PageLeftPane.assertAbsence(page2);
+    PageList.assertAbsence(page2);
     gitSync.DiscardChanges();
     // verify page2 is recovered back
-    PageLeftPane.assertPresence(page2);
+    PageList.assertPresence(page2);
     EditorNavigation.SelectEntityByName(page2, EntityType.Page);
     cy.wait("@getPage");
     // verify data binding on page2
@@ -123,7 +122,9 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
     // discard changes
     gitSync.DiscardChanges();
     //verify query1 is recovered
+    PageLeftPane.switchSegment(PagePaneSegment.Queries);
     PageLeftPane.assertPresence(query1);
+    PageLeftPane.switchSegment(PagePaneSegment.UI);
     cy.get(".bp3-input").should("have.value", "Nancy");
   });
 
@@ -136,7 +137,9 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
     //     jsEditor.CreateJSObject('return "Success";');
     // delete jsObject1
     EditorNavigation.SelectEntityByName(jsObject, EntityType.JSObject);
-    agHelper.ActionContextMenuWithInPane("Delete", "Are you sure?", true);
+    agHelper.ActionContextMenuWithInPane({
+      action: "Delete",
+    });
     PageLeftPane.assertAbsence(jsObject);
     // discard changes
     gitSync.DiscardChanges();
@@ -144,7 +147,9 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
     cy.wait("@getPage");
     cy.wait(3000);
     //verify JSObject is recovered
+    PageLeftPane.switchSegment(PagePaneSegment.JS);
     PageLeftPane.assertPresence(jsObject);
+    PageLeftPane.switchSegment(PagePaneSegment.UI);
     cy.get(".bp3-input").should("have.value", "Success");
   });
 
@@ -155,14 +160,13 @@ describe("Git discard changes:", { tags: ["@tag.Git"] }, function () {
     // discard changes
     gitSync.DiscardChanges();
     // verify page3 is removed
-    PageLeftPane.expandCollapseItem("Pages");
-    PageLeftPane.assertAbsence(page3);
+    PageList.assertAbsence(page3);
   });
 
   it(`8. Add new page i.e page3, discard changes should not throw error: "resource not found"`, () => {
     cy.Createpage(page3);
     gitSync.DiscardChanges();
-    PageLeftPane.assertAbsence(page3);
+    PageList.assertAbsence(page3);
   });
 
   it("9. On discard failure an error message should be show and user should be able to discard again", () => {

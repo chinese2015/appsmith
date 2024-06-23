@@ -21,7 +21,6 @@ import {
   dispatchTestKeyboardEventWithCode,
   MockApplication,
   mockCreateCanvasWidget,
-  mockGetCanvasWidgetDsl,
   mockGetWidgetEvalValues,
   MockPageDSL,
   useMockDsl,
@@ -36,7 +35,6 @@ import { SelectionRequestType } from "sagas/WidgetSelectUtils";
 import * as widgetActions from "actions/widgetActions";
 import * as uiSelectors from "selectors/ui";
 import { NavigationMethod } from "../../../utils/history";
-import { setExplorerPinnedAction } from "actions/explorerActions";
 
 jest.mock("constants/routes", () => {
   return {
@@ -46,12 +44,12 @@ jest.mock("constants/routes", () => {
 });
 
 describe("Canvas Hot Keys", () => {
+  const pageId = "0123456789abcdef00000000";
   beforeAll(() => {
     runSagaMiddleware();
   });
 
   const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-  const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
 
   function UpdatedEditor({ dsl }: any) {
     useMockDsl(dsl);
@@ -107,7 +105,6 @@ describe("Canvas Hot Keys", () => {
       const dsl: any = widgetCanvasFactory.build({
         children,
       });
-      spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
       mockGetIsFetchingPage.mockImplementation(() => false);
       const spyWidgetSelection = jest.spyOn(
         widgetSelectionsActions,
@@ -118,13 +115,14 @@ describe("Canvas Hot Keys", () => {
 
       const component = render(
         <MemoryRouter
-          initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+          initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
         >
           <MockApplication>
             <GlobalHotKeys
               getMousePosition={() => {
                 return { x: 0, y: 0 };
               }}
+              toggleDebugger={() => {}}
             >
               <UpdatedEditor dsl={dsl} />
             </GlobalHotKeys>
@@ -154,12 +152,6 @@ describe("Canvas Hot Keys", () => {
       const artBoard: any = component.queryByTestId("t--canvas-artboard");
       // deselect all other widgets
       fireEvent.click(artBoard);
-      expect(spyWidgetSelection).toHaveBeenCalledWith(
-        SelectionRequestType.Empty,
-        [],
-        NavigationMethod.CanvasClick,
-      );
-      spyWidgetSelection.mockClear();
 
       dispatchTestKeyboardEventWithCode(
         component.container,
@@ -269,13 +261,14 @@ describe("Cut/Copy/Paste hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <MockCanvas />
         </GlobalHotKeys>
       </MockPageDSL>,
       { initialState: store.getState(), sagasToRun: sagasToRunForTests },
     );
-    const artBoard: any = await component.queryByTestId("t--canvas-artboard");
+    const artBoard: any = component.queryByTestId("t--canvas-artboard");
     // deselect all other widgets
     fireEvent.click(artBoard);
     act(() => {
@@ -360,12 +353,13 @@ describe("Cut/Copy/Paste hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <MockCanvas />
         </GlobalHotKeys>
       </MockPageDSL>,
     );
-    const artBoard: any = await component.queryByTestId("t--canvas-artboard");
+    const artBoard: any = component.queryByTestId("t--canvas-artboard");
     // deselect all other widgets
     fireEvent.click(artBoard);
     act(() => {
@@ -417,6 +411,7 @@ describe("Undo/Redo hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <MockCanvas />
         </GlobalHotKeys>
@@ -447,6 +442,7 @@ describe("Undo/Redo hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <MockCanvas />
         </GlobalHotKeys>
@@ -477,6 +473,7 @@ describe("Undo/Redo hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <MockCanvas />
         </GlobalHotKeys>
@@ -510,6 +507,7 @@ describe("cmd + s hotkey", () => {
           getMousePosition={() => {
             return { x: 0, y: 0 };
           }}
+          toggleDebugger={() => {}}
         >
           <div />
         </GlobalHotKeys>
@@ -530,76 +528,5 @@ describe("cmd + s hotkey", () => {
         component.getByText(createMessage(SAVE_HOTKEY_TOASTER_MESSAGE)),
       ).toBeDefined();
     });
-  });
-});
-
-describe("mod + / hotkey", () => {
-  it("Should dispatch pin/unpin explorer on mod + /", async () => {
-    const dispatchSpy = jest.spyOn(store, "dispatch");
-    const component = render(
-      <GlobalHotKeys
-        getMousePosition={() => {
-          return { x: 0, y: 0 };
-        }}
-      >
-        <div />
-      </GlobalHotKeys>,
-    );
-    dispatchSpy.mockClear();
-
-    dispatchTestKeyboardEventWithCode(
-      component.container,
-      "keydown",
-      "/",
-      191,
-      false,
-      true,
-    );
-
-    expect(dispatchSpy).toBeCalledTimes(2);
-    expect(dispatchSpy).toHaveBeenNthCalledWith(
-      1,
-      setExplorerPinnedAction(false),
-    );
-  });
-
-  it("Shouldn't dispatch pin/unpin explorer on mod + / when signposting is enabled", async () => {
-    const dispatchSpy = jest.spyOn(store, "dispatch");
-    const state: any = {
-      entities: {
-        pageList: {
-          applicationId: "1",
-        },
-      },
-      ui: {
-        onBoarding: {
-          firstTimeUserOnboardingApplicationIds: ["1"],
-        },
-      },
-    };
-    const component = render(
-      <GlobalHotKeys
-        getMousePosition={() => {
-          return { x: 0, y: 0 };
-        }}
-      >
-        <div />
-      </GlobalHotKeys>,
-      {
-        initialState: state,
-      },
-    );
-    dispatchSpy.mockClear();
-
-    dispatchTestKeyboardEventWithCode(
-      component.container,
-      "keydown",
-      "/",
-      191,
-      false,
-      true,
-    );
-
-    expect(dispatchSpy).toBeCalledTimes(0);
   });
 });

@@ -4,7 +4,7 @@ import { DATASOURCE_REST_API_FORM } from "@appsmith/constants/forms";
 import type { Datasource } from "entities/Datasource";
 import type { InjectedFormProps } from "redux-form";
 import { getFormMeta, reduxForm } from "redux-form";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import FormControl from "pages/Editor/FormControl";
 import { StyledInfo } from "components/formControls/InputTextControl";
 import { connect } from "react-redux";
@@ -36,7 +36,7 @@ import _ from "lodash";
 import FormLabel from "components/editorComponents/FormLabel";
 import CopyToClipBoard from "components/designSystems/appsmith/CopyToClipBoard";
 import { updateReplayEntity } from "actions/pageActions";
-import { ENTITY_TYPE } from "entities/AppsmithConsole";
+import { ENTITY_TYPE } from "@appsmith/entities/AppsmithConsole/utils";
 import { TEMP_DATASOURCE_ID } from "constants/Datasource";
 import { Form } from "./DBForm";
 import { selectFeatureFlagCheck } from "@appsmith/selectors/featureFlagsSelectors";
@@ -311,7 +311,7 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
             "isSendSessionEnabled",
             "Send Appsmith signature header",
             "",
-            true,
+            false,
           )}
         </FormInputContainer>
         {formData.isSendSessionEnabled && (
@@ -331,7 +331,7 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
             "connection.ssl.authTypeControl",
             "Use Self-Signed Certificate",
             "",
-            true,
+            false,
           )}
         </FormInputContainer>
         {this.renderSelfSignedCertificateFields()}
@@ -595,7 +595,7 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
             "",
             false,
             "",
-            true,
+            !!_.get(formData.authentication, "isTokenHeader"),
           )}
         </FormInputContainer>
         {_.get(formData.authentication, "isTokenHeader") && (
@@ -679,7 +679,7 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
             "",
             false,
             "",
-            false,
+            !!_.get(formData.authentication, "isAuthorizationHeader"),
           )}
         </FormInputContainer>
       </>
@@ -721,7 +721,7 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
               "",
               false,
               "",
-              false,
+              !!_.get(authentication, "sendScopeWithRefreshToken"),
             )}
           </FormInputContainer>
         )}
@@ -751,7 +751,9 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
           </FormInputContainer>
         )}
         {isConnectSelfSigned && (
-          <FormInputContainer data-location-id={btoa("selfsignedcert")}>
+          <FormInputContainer
+            data-location-id={btoa("authentication.useSelfSignedCert")}
+          >
             {this.renderCheckboxViaFormControl(
               "authentication.useSelfSignedCert",
               "Use Self-Signed Certificate for Authorization requests",
@@ -843,6 +845,16 @@ class DatasourceRestAPIEditor extends React.Component<Props> {
             "",
             false,
           )}
+        </FormInputContainer>
+        <FormInputContainer data-location-id={btoa("authentication.expiresIn")}>
+          {this.renderInputTextControlViaFormControl({
+            configProperty: "authentication.expiresIn",
+            label: "Authorization expires in (seconds)",
+            placeholderText: "3600",
+            dataType: "NUMBER",
+            encrypted: false,
+            isRequired: false,
+          })}
         </FormInputContainer>
 
         {!_.get(formData.authentication, "isAuthorizationHeader", true) &&

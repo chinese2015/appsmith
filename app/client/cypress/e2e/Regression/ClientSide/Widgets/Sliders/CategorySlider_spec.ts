@@ -116,7 +116,8 @@ describe(
     });
 
     it("4. Verify Range slider visibility in explorer", () => {
-      PageLeftPane.switchSegment(PagePaneSegment.Widgets);
+      PageLeftPane.switchSegment(PagePaneSegment.UI);
+      PageLeftPane.switchToAddNew();
       agHelper.ClearTextField(locators._entityExplorersearch);
       agHelper.TypeText(locators._entityExplorersearch, "Category");
       agHelper.AssertElementExist(
@@ -285,7 +286,10 @@ describe(
         .GetWidgetCSSFrAttribute(locators._sliderThumb, "background-color")
         .then((sliderColor) => {
           agHelper
-            .GetWidgetCSSFrAttribute(propPane._fillColor, "background-color")
+            .GetWidgetCSSFrAttribute(
+              `${propPane._propertyControlSelectedColorButton("fillcolor")}`,
+              "background-color",
+            )
             .then((newColor) => {
               expect(sliderColor).to.eq(newColor);
             });

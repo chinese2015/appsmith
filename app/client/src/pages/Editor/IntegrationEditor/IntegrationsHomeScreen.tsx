@@ -20,7 +20,7 @@ import { getQueryParams } from "utils/URLUtils";
 import { getIsGeneratePageInitiator } from "utils/GenerateCrudUtil";
 import { getCurrentApplicationId } from "selectors/editorSelectors";
 import { integrationEditorURL } from "@appsmith/RouteBuilder";
-import { getCurrentAppWorkspace } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentAppWorkspace } from "@appsmith/selectors/selectedWorkspaceSelectors";
 
 import { Tab, TabPanel, Tabs, TabsList } from "design-system";
 import Debugger, {
@@ -28,7 +28,7 @@ import Debugger, {
   ResizerMainContainer,
 } from "../DataSourceEditor/Debugger";
 import { showDebuggerFlag } from "selectors/debuggerSelectors";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { DatasourceCreateEntryPoints } from "constants/Datasource";
 import { selectFeatureFlags } from "@appsmith/selectors/featureFlagsSelectors";
 import { isGACEnabled } from "@appsmith/utils/planHelpers";

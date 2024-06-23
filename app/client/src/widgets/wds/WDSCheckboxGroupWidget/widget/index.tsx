@@ -4,7 +4,7 @@ import BaseWidget from "widgets/BaseWidget";
 import type { WidgetState } from "widgets/BaseWidget";
 import type { SetterConfig } from "entities/AppTheming";
 import type { AnvilConfig } from "WidgetProvider/constants";
-import { Checkbox, CheckboxGroup } from "@design-system/widgets";
+import { Checkbox, ToggleGroup } from "@design-system/widgets";
 import type { DerivedPropertiesMap } from "WidgetProvider/factory";
 import { EventType } from "constants/AppsmithActionConstants/ActionConstants";
 
@@ -16,7 +16,8 @@ import {
   metaConfig,
   propertyPaneContentConfig,
   settersConfig,
-} from "./../config";
+  methodsConfig,
+} from "../config";
 import { validateInput } from "./helpers";
 import type { CheckboxGroupWidgetProps, OptionProps } from "./types";
 
@@ -36,10 +37,6 @@ class WDSCheckboxGroupWidget extends BaseWidget<
 
   static getDefaults() {
     return defaultsConfig;
-  }
-
-  static getAutoLayoutConfig() {
-    return {};
   }
 
   static getAnvilConfig(): AnvilConfig | null {
@@ -82,6 +79,10 @@ class WDSCheckboxGroupWidget extends BaseWidget<
     };
   }
 
+  static getMethods() {
+    return methodsConfig;
+  }
+
   componentDidUpdate(prevProps: CheckboxGroupWidgetProps) {
     if (
       xor(this.props.defaultSelectedValues, prevProps.defaultSelectedValues)
@@ -107,36 +108,31 @@ class WDSCheckboxGroupWidget extends BaseWidget<
   };
 
   getWidgetView() {
-    const {
-      labelPosition,
-      labelTooltip,
-      options,
-      selectedOptionValue,
-      widgetId,
-      ...rest
-    } = this.props;
+    const { labelTooltip, options, selectedValues, widgetId, ...rest } =
+      this.props;
 
     const validation = validateInput(this.props);
 
     return (
-      <CheckboxGroup
+      <ToggleGroup
         {...rest}
         contextualHelp={labelTooltip}
         errorMessage={validation.errorMessage}
+        isInvalid={validation.validationStatus === "invalid"}
+        items={options}
         onChange={this.onChange}
-        validationState={validation.validationStatus}
-        value={selectedOptionValue}
+        value={selectedValues}
       >
-        {options.map((option, index) => (
+        {({ index, label, value }) => (
           <Checkbox
+            excludeFromTabOrder={this.props.disableWidgetInteraction}
             key={`${widgetId}-option-${index}`}
-            labelPosition={labelPosition}
-            value={option.value}
+            value={value}
           >
-            {option.label}
+            {label}
           </Checkbox>
-        ))}
-      </CheckboxGroup>
+        )}
+      </ToggleGroup>
     );
   }
 }

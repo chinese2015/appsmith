@@ -1,7 +1,4 @@
-import type {
-  ConfigTree,
-  unEvalAndConfigTree,
-} from "entities/DataTree/dataTreeTypes";
+import type { unEvalAndConfigTree } from "entities/DataTree/dataTreeTypes";
 import type { ActionValidationConfigMap } from "constants/PropertyControlConstants";
 import type { AppTheme } from "entities/AppTheming";
 
@@ -18,7 +15,9 @@ import type { EvalMetaUpdates } from "@appsmith/workers/common/DataTreeEvaluator
 import type { WorkerRequest } from "@appsmith/workers/common/types";
 import type { DataTreeDiff } from "@appsmith/workers/Evaluation/evaluationUtils";
 import type { APP_MODE } from "entities/App";
-import type { WebworkerSpan } from "UITelemetry/generateWebWorkerTraces";
+import type { WebworkerSpanData } from "UITelemetry/generateWebWorkerTraces";
+import type { SpanAttributes } from "UITelemetry/generateTraces";
+import type { AffectedJSObjects } from "sagas/EvaluationsSagaUtils";
 
 export type EvalWorkerSyncRequest<T = any> = WorkerRequest<
   T,
@@ -43,6 +42,8 @@ export interface EvalTreeRequestData {
   metaWidgets: MetaWidgetsReduxState;
   appMode?: APP_MODE;
   widgetsMeta: Record<string, any>;
+  shouldRespondWithLogs?: boolean;
+  affectedJSObjects: AffectedJSObjects;
 }
 
 export interface EvalTreeResponseData {
@@ -54,14 +55,17 @@ export interface EvalTreeResponseData {
   logs: unknown[];
   unEvalUpdates: DataTreeDiff[];
   isCreateFirstTree: boolean;
-  configTree: ConfigTree;
   staleMetaIds: string[];
   removedPaths: Array<{ entityId: string; fullpath: string }>;
   isNewWidgetAdded: boolean;
   undefinedEvalValuesMap: Record<string, boolean>;
   jsVarsCreatedEvent?: { path: string; type: string }[];
-  webworkerTelemetry?: WebworkerSpan[];
+  webworkerTelemetry?: Record<string, WebworkerSpanData | SpanAttributes>;
   updates: string;
 }
 
-export type JSVarMutatedEvents = Record<string, { path: string; type: string }>;
+export interface UpdateTreeResponse {
+  unEvalUpdates: DataTreeDiff[];
+  evalOrder: string[];
+  jsUpdates: Record<string, JSUpdate>;
+}

@@ -30,8 +30,7 @@ import {
   scrollWidgetIntoView,
   switchTab,
 } from "utils/replayHelpers";
-import { updateAndSaveLayout } from "actions/pageActions";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import {
   getCurrentApplicationId,
   snipingModeSelector,
@@ -53,12 +52,17 @@ import {
   getSettingConfig,
 } from "@appsmith/selectors/entitiesSelector";
 import type { Action } from "entities/Action";
-import { isAPIAction, isQueryAction, isSaaSAction } from "entities/Action";
+import {
+  isAIAction,
+  isAPIAction,
+  isQueryAction,
+  isSaaSAction,
+} from "entities/Action";
 import { API_EDITOR_TABS } from "constants/ApiEditorConstants/CommonApiConstants";
 import { EDITOR_TABS } from "constants/QueryEditorConstants";
 import _, { isEmpty } from "lodash";
 import type { ReplayEditorUpdate } from "entities/Replay/ReplayEntity/ReplayEditor";
-import { ENTITY_TYPE } from "entities/AppsmithConsole";
+import { ENTITY_TYPE } from "@appsmith/entities/AppsmithConsole/utils";
 import type { Datasource } from "entities/Datasource";
 import { initialize } from "redux-form";
 import {
@@ -80,6 +84,7 @@ import { getUIComponent } from "pages/Editor/QueryEditor/helpers";
 import type { Plugin } from "api/PluginApi";
 import { UIComponentTypes } from "api/PluginApi";
 import { getCurrentEnvironmentId } from "@appsmith/selectors/environmentSelectors";
+import { updateAndSaveAnvilLayout } from "layoutSystems/anvil/utils/anvilChecksUtils";
 
 export interface UndoRedoPayload {
   operation: ReplayReduxActionTypes;
@@ -189,13 +194,14 @@ export function* undoRedoSaga(action: ReduxAction<UndoRedoPayload>) {
     if (!workerResponse) return;
 
     const {
+      endTime,
       event,
       logs,
       paths,
       replay,
       replayEntity,
       replayEntityType,
-      timeTaken,
+      startTime,
     } = workerResponse;
 
     logs && logs.forEach((evalLog: any) => log.debug(evalLog));
@@ -208,14 +214,15 @@ export function* undoRedoSaga(action: ReduxAction<UndoRedoPayload>) {
     switch (replayEntityType) {
       case ENTITY_TYPE.WIDGET: {
         const isPropertyUpdate = replay.widgets && replay.propertyUpdates;
-        AnalyticsUtil.logEvent(event, { paths, timeTaken });
+        AnalyticsUtil.logEvent(event, {
+          paths,
+          timeTaken: endTime - startTime,
+        });
 
-        yield put(
-          updateAndSaveLayout(replayEntity.widgets, {
-            isRetry: false,
-            shouldReplay: false,
-          }),
-        );
+        yield call(updateAndSaveAnvilLayout, replayEntity.widgets, {
+          isRetry: false,
+          shouldReplay: false,
+        });
 
         if (isPropertyUpdate) {
           yield call(openPropertyPaneSaga, replay);
@@ -303,7 +310,9 @@ function* replayActionSaga(
 
   //Reinitialize form
   const currentFormName =
-    isQueryAction(replayEntity) || isSaaSAction(replayEntity)
+    isQueryAction(replayEntity) ||
+    isSaaSAction(replayEntity) ||
+    isAIAction(replayEntity)
       ? QUERY_EDITOR_FORM_NAME
       : API_EDITOR_FORM_NAME;
   yield put(initialize(currentFormName, replayEntity));

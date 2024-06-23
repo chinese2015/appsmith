@@ -6,31 +6,25 @@ import com.appsmith.server.repositories.ApplicationRepository;
 import com.appsmith.server.repositories.NewActionRepository;
 import com.appsmith.server.services.AnalyticsService;
 import com.appsmith.server.services.AssetService;
-import com.appsmith.server.services.ConfigService;
 import com.appsmith.server.services.PermissionGroupService;
 import com.appsmith.server.services.SessionUserService;
 import com.appsmith.server.services.UserDataService;
+import com.appsmith.server.services.WorkspaceService;
 import com.appsmith.server.solutions.ApplicationPermission;
 import com.appsmith.server.solutions.DatasourcePermission;
 import com.appsmith.server.solutions.PolicySolution;
+import com.appsmith.server.solutions.WorkspacePermission;
 import jakarta.validation.Validator;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.stereotype.Service;
-import reactor.core.scheduler.Scheduler;
 
 @Service
 public class ApplicationServiceCECompatibleImpl extends ApplicationServiceCEImpl
         implements ApplicationServiceCECompatible {
     public ApplicationServiceCECompatibleImpl(
-            Scheduler scheduler,
             Validator validator,
-            MongoConverter mongoConverter,
-            ReactiveMongoTemplate reactiveMongoTemplate,
             ApplicationRepository repository,
             AnalyticsService analyticsService,
             PolicySolution policySolution,
-            ConfigService configService,
             ResponseUtils responseUtils,
             PermissionGroupService permissionGroupService,
             NewActionRepository newActionRepository,
@@ -38,16 +32,14 @@ public class ApplicationServiceCECompatibleImpl extends ApplicationServiceCEImpl
             DatasourcePermission datasourcePermission,
             ApplicationPermission applicationPermission,
             SessionUserService sessionUserService,
-            UserDataService userDataService) {
+            UserDataService userDataService,
+            WorkspaceService workspaceService,
+            WorkspacePermission workspacePermission) {
         super(
-                scheduler,
                 validator,
-                mongoConverter,
-                reactiveMongoTemplate,
                 repository,
                 analyticsService,
                 policySolution,
-                configService,
                 responseUtils,
                 permissionGroupService,
                 newActionRepository,
@@ -55,6 +47,8 @@ public class ApplicationServiceCECompatibleImpl extends ApplicationServiceCEImpl
                 datasourcePermission,
                 applicationPermission,
                 sessionUserService,
-                userDataService);
+                userDataService,
+                workspaceService,
+                workspacePermission);
     }
 }

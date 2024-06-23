@@ -10,7 +10,9 @@ import type {
   AutocompletionDefinitions,
   AutoLayoutConfig,
   CanvasWidgetStructure,
+  FlattenedWidgetProps,
   WidgetConfigProps,
+  WidgetDefaultProps,
   WidgetMethods,
 } from "WidgetProvider/constants";
 import {
@@ -19,6 +21,7 @@ import {
   convertFunctionsToString,
   enhancePropertyPaneConfig,
   generatePropertyPaneSearchConfig,
+  getDefaultOnCanvasUIConfig,
   PropertyPaneConfigTypes,
 } from "./helpers";
 import { FILL_WIDGET_MIN_WIDTH } from "constants/minWidthConstants";
@@ -30,11 +33,15 @@ import {
   WidgetFeatureProps,
 } from "../../utils/WidgetFeatures";
 import type { RegisteredWidgetFeatures } from "../../utils/WidgetFeatures";
-// import { WIDGETS_COUNT } from "widgets";
 import type { SetterConfig } from "entities/AppTheming";
 import { freeze, memoize } from "./decorators";
 import produce from "immer";
-import { defaultSizeConfig } from "layoutSystems/anvil/utils/widgetUtils";
+import type { CanvasWidgetsReduxState } from "reducers/entityReducers/canvasWidgetsReducer";
+import type {
+  CopiedWidgetData,
+  PasteDestinationInfo,
+} from "layoutSystems/anvil/utils/paste/types";
+import { call } from "redux-saga/effects";
 
 type WidgetDerivedPropertyType = any;
 export type DerivedPropertiesMap = Record<string, string>;
@@ -74,8 +81,21 @@ class WidgetFactory {
   }
 
   private static configureWidget(widget: typeof BaseWidget) {
+    const defaultConfig: WidgetDefaultProps = widget.getDefaults();
     const config = widget.getConfig();
 
+    /**
+     * As this will make all layout system widgets have these properties.
+     * We're going to prioritise #21825.
+     * This will prevent the DSLs which are persisted from being polluted and overly large.
+     *
+     * The following makes sure that the on canvas ui configurations are picked up from widgets
+     * and added to the WidgetFactory, such that these are accessible when needed in the applcation.
+     */
+    const onCanvasUI =
+      config.onCanvasUI || getDefaultOnCanvasUIConfig(defaultConfig);
+
+    const { IconCmp } = widget.getMethods();
     const features = widget.getFeatures();
 
     let enhancedFeatures: Record<string, unknown> = {};
@@ -98,15 +118,18 @@ class WidgetFactory {
       ...enhancedFeatures,
       searchTags: config.searchTags,
       tags: config.tags,
-      hideCard: !!config.hideCard || !config.iconSVG,
+      hideCard: !!config.hideCard || !(config.iconSVG || IconCmp),
       isDeprecated: !!config.isDeprecated,
       replacement: config.replacement,
       displayName: config.name,
       key: generateReactKey(),
       iconSVG: config.iconSVG,
+      thumbnailSVG: config.thumbnailSVG,
       isCanvas: config.isCanvas,
       needsHeightForContent: config.needsHeightForContent,
       isSearchWildcard: config.isSearchWildcard,
+      needsErrorInfo: !!config.needsErrorInfo,
+      onCanvasUI,
     };
 
     WidgetFactory.widgetConfigMap.set(widget.type, Object.freeze(_config));
@@ -429,6 +452,9 @@ class WidgetFactory {
   @memoize
   @freeze
   static getWidgetAutoLayoutConfig(type: WidgetType): AutoLayoutConfig {
+    // we don't need AutoLayoutConfig config for WDS widgets
+    if (type?.includes("WDS")) return {};
+
     const widget = WidgetFactory.widgetsMap.get(type);
 
     const baseAutoLayoutConfig = widget?.getAutoLayoutConfig();
@@ -476,7 +502,7 @@ class WidgetFactory {
       log.error(`Anvil config is not defined for widget type: ${type}`);
       return {
         isLargeWidget: false,
-        widgetSize: defaultSizeConfig,
+        widgetSize: {},
       };
     }
     return baseAnvilConfig;
@@ -559,6 +585,54 @@ class WidgetFactory {
     } else {
       return {};
     }
+  }
+
+  @memoize
+  static performPasteOperationChecks(
+    allWidgets: CanvasWidgetsReduxState,
+    oldWidget: FlattenedWidgetProps,
+    newWidget: FlattenedWidgetProps,
+    widgetIdMap: Record<string, string>,
+  ): FlattenedWidgetProps {
+    const widget = WidgetFactory.widgetsMap.get(newWidget.type);
+
+    if (!widget) return newWidget;
+
+    const widgetProps: FlattenedWidgetProps | null =
+      widget?.pasteOperationChecks(
+        allWidgets,
+        oldWidget,
+        newWidget,
+        widgetIdMap,
+      );
+
+    return widgetProps !== null ? widgetProps : newWidget;
+  }
+
+  @memoize
+  static *performPasteOperation(
+    allWidgets: CanvasWidgetsReduxState, // All widgets
+    copiedWidgets: CopiedWidgetData[], // Original copied widgets
+    destinationInfo: PasteDestinationInfo, // Destination info of copied widgets
+    widgetIdMap: Record<string, string>, // Map of oldWidgetId -> newWidgetId
+    reverseWidgetIdMap: Record<string, string>, // Map of newWidgetId -> oldWidgetId
+  ) {
+    const { parentOrder } = destinationInfo;
+    const parent: FlattenedWidgetProps =
+      allWidgets[parentOrder[parentOrder.length - 1]];
+    const widget = WidgetFactory.widgetsMap.get(parent.type);
+
+    if (!widget) return allWidgets;
+
+    const res: CanvasWidgetsReduxState = yield call(
+      widget?.performPasteOperation,
+      allWidgets,
+      copiedWidgets,
+      destinationInfo,
+      widgetIdMap,
+      reverseWidgetIdMap,
+    );
+    return res;
   }
 }
 

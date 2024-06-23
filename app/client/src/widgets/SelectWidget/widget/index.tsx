@@ -53,7 +53,9 @@ import type {
 } from "WidgetProvider/constants";
 
 import IconSVG from "../icon.svg";
+import ThumbnailSVG from "../thumbnail.svg";
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
+import type { DynamicPath } from "utils/DynamicBindingUtils";
 
 class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
   constructor(props: SelectWidgetProps) {
@@ -65,6 +67,7 @@ class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
     return {
       name: "Select",
       iconSVG: IconSVG,
+      thumbnailSVG: ThumbnailSVG,
       tags: [WIDGET_TAGS.SUGGESTED_WIDGETS, WIDGET_TAGS.SELECT],
       needsMeta: true,
       searchTags: ["dropdown"],
@@ -138,6 +141,10 @@ class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
       ) {
         let modify;
 
+        const dynamicPropertyPathList: DynamicPath[] = [
+          ...(widget.dynamicPropertyPathList || []),
+        ];
+
         if (queryConfig.select) {
           modify = {
             sourceData: queryConfig.select.data,
@@ -149,10 +156,19 @@ class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
             serverSideFiltering: true,
             onFilterUpdate: queryConfig.select.run,
           };
+          if (
+            !!SelectWidget.getFeatureFlag(
+              FEATURE_FLAG.rollout_js_enabled_one_click_binding_enabled,
+            )
+          )
+            dynamicPropertyPathList.push({ key: "sourceData" });
         }
 
         return {
           modify,
+          dynamicUpdates: {
+            dynamicPropertyPathList,
+          },
         };
       },
     };
@@ -202,7 +218,6 @@ class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
     return {
       optionLabel: ["sourceData"],
       optionValue: ["sourceData"],
-      defaultOptionValue: ["serverSideFiltering", "options"],
     };
   }
 
@@ -375,6 +390,12 @@ class SelectWidget extends BaseWidget<SelectWidgetProps, WidgetState> {
               },
             },
             dependencies: ["serverSideFiltering", "options"],
+            helperText: (
+              <div className="leading-5" style={{ marginTop: "10px" }}>
+                Make sure the default value is present in the source data to
+                have it selected by default in the UI.
+              </div>
+            ),
           },
         ],
       },

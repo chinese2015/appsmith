@@ -1,6 +1,6 @@
 package com.external.plugins;
 
-import com.appsmith.external.connectionpoolconfig.configurations.ConnectionPoolConfig;
+import com.appsmith.external.configurations.connectionpool.ConnectionPoolConfig;
 import com.appsmith.external.constants.DataType;
 import com.appsmith.external.datatypes.AppsmithType;
 import com.appsmith.external.dtos.ExecuteActionDTO;
@@ -30,6 +30,7 @@ import com.appsmith.external.services.SharedConfig;
 import com.external.plugins.datatypes.PostgresSpecificDataTypes;
 import com.external.plugins.exceptions.PostgresErrorMessages;
 import com.external.plugins.exceptions.PostgresPluginError;
+import com.external.plugins.utils.MutualTLSCertValidatingFactory;
 import com.external.plugins.utils.PostgresDatasourceUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -50,6 +51,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.Date;
@@ -1183,8 +1185,48 @@ public class PostgresPlugin extends BasePlugin {
                 break;
             case DEFAULT:
                 /* do nothing - accept default driver setting */
+                break;
+
+            case VERIFY_CA:
+            case VERIFY_FULL:
+                config.addDataSourceProperty("ssl", "true");
+                if (sslAuthType == SSLDetails.AuthType.VERIFY_FULL) {
+                    config.addDataSourceProperty("sslmode", "verify-full");
+                } else {
+                    config.addDataSourceProperty("sslmode", "verify-ca");
+                }
+                // Common properties for both VERIFY_CA and VERIFY_FULL
+                config.addDataSourceProperty("sslfactory", MutualTLSCertValidatingFactory.class.getName());
+                config.addDataSourceProperty(
+                        "clientCertString",
+                        new String(
+                                datasourceConfiguration
+                                        .getConnection()
+                                        .getSsl()
+                                        .getClientCACertificateFile()
+                                        .getDecodedContent(),
+                                StandardCharsets.UTF_8));
+                config.addDataSourceProperty(
+                        "clientKeyString",
+                        new String(
+                                datasourceConfiguration
+                                        .getConnection()
+                                        .getSsl()
+                                        .getClientKeyCertificateFile()
+                                        .getDecodedContent(),
+                                StandardCharsets.UTF_8));
+                config.addDataSourceProperty(
+                        "serverCACertString",
+                        new String(
+                                datasourceConfiguration
+                                        .getConnection()
+                                        .getSsl()
+                                        .getServerCACertificateFile()
+                                        .getDecodedContent(),
+                                StandardCharsets.UTF_8));
 
                 break;
+
             default:
                 throw new AppsmithPluginException(
                         PostgresPluginError.POSTGRES_PLUGIN_ERROR,

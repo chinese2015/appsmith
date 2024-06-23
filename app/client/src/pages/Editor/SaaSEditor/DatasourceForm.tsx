@@ -39,6 +39,7 @@ import EntityNotFoundPane from "../EntityNotFoundPane";
 import type { Plugin } from "api/PluginApi";
 import {
   isDatasourceAuthorizedForQueryCreation,
+  isEnabledForPreviewData,
   isGoogleSheetPluginDS,
 } from "utils/editorContextUtils";
 import type { PluginType } from "entities/Action";
@@ -79,14 +80,17 @@ import DSDataFilter from "@appsmith/components/DSDataFilter";
 import { DSEditorWrapper } from "../DataSourceEditor";
 import type { DatasourceFilterState } from "../DataSourceEditor";
 import { getQueryParams } from "utils/URLUtils";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { getDefaultEnvironmentId } from "@appsmith/selectors/environmentSelectors";
 import { DEFAULT_ENV_ID } from "@appsmith/api/ApiUtils";
 import {
   getHasDeleteDatasourcePermission,
   getHasManageDatasourcePermission,
 } from "@appsmith/utils/BusinessFeatures/permissionPageHelpers";
-import { selectFeatureFlagCheck } from "@appsmith/selectors/featureFlagsSelectors";
+import {
+  selectFeatureFlagCheck,
+  selectFeatureFlags,
+} from "@appsmith/selectors/featureFlagsSelectors";
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
 import DatasourceTabs from "../DatasourceInfo/DatasorceTabs";
 import { getCurrentApplicationIdForCreateNewApp } from "@appsmith/selectors/applicationSelectors";
@@ -128,6 +132,7 @@ interface StateProps extends JSONtoFormProps {
   requiredFields: Record<string, ControlProps>;
   configDetails: Record<string, string>;
   isPluginAuthFailed: boolean;
+  isPluginAllowedToPreviewData: boolean;
 }
 interface DatasourceFormFunctions {
   discardTempDatasource: () => void;
@@ -517,14 +522,8 @@ class DatasourceSaaSEditor extends JSONtoForm<Props, State> {
   };
 
   shouldShowTabs = () => {
-    const { datasource, isPluginAuthorized, pluginPackageName } = this.props;
-
-    const isGoogleSheetPlugin = isGoogleSheetPluginDS(pluginPackageName);
-
-    const isGoogleSheetSchemaAvailable =
-      isGoogleSheetPlugin && isPluginAuthorized;
-
-    return isGoogleSheetSchemaAvailable && datasource;
+    const { isPluginAllowedToPreviewData, isPluginAuthorized } = this.props;
+    return isPluginAllowedToPreviewData && isPluginAuthorized;
   };
 
   renderTabsForViewMode = () => {
@@ -685,7 +684,7 @@ class DatasourceSaaSEditor extends JSONtoForm<Props, State> {
                     isSaving={isSaving}
                     isTesting={isTesting}
                     onCancel={() => this.onCancel()}
-                    pageId={pageId}
+                    parentEntityId={pageId}
                     pluginName={plugin?.name || ""}
                     pluginPackageName={pluginPackageName}
                     pluginType={plugin?.type as PluginType}
@@ -814,6 +813,10 @@ const mapStateToProps = (state: AppState, props: any) => {
   const currentApplicationIdForCreateNewApp =
     getCurrentApplicationIdForCreateNewApp(state);
 
+  // should plugin be able to preview data
+  const isPluginAllowedToPreviewData =
+    !!plugin && isEnabledForPreviewData(datasource as Datasource, plugin);
+
   return {
     datasource,
     datasourceButtonConfiguration,
@@ -851,7 +854,8 @@ const mapStateToProps = (state: AppState, props: any) => {
     showDebugger,
     scopeValue,
     isPluginAuthFailed,
-    featureFlags: state.ui.users.featureFlag.data,
+    featureFlags: selectFeatureFlags(state),
+    isPluginAllowedToPreviewData,
   };
 };
 

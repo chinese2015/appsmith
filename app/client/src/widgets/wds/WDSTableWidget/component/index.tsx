@@ -49,9 +49,8 @@ interface ReactTableComponentProps {
   columnWidthMap?: { [key: string]: number };
   handleResizeColumn: (columnWidthMap: { [key: string]: number }) => void;
   handleReorderColumn: (columnOrder: string[]) => void;
-  searchTableData: (searchKey: any) => void;
+  onSearch: (searchKey: any) => void;
   filters?: ReactTableFilter[];
-  applyFilter: (filters: ReactTableFilter[]) => void;
   columns: ReactTableColumnProps[];
   compactMode?: CompactMode;
   isVisibleSearch?: boolean;
@@ -82,6 +81,7 @@ interface ReactTableComponentProps {
   canFreezeColumn?: boolean;
   showConnectDataOverlay: boolean;
   onConnectData: () => void;
+  excludeFromTabOrder?: boolean;
 }
 
 function ReactTableComponent(props: ReactTableComponentProps) {
@@ -89,7 +89,6 @@ function ReactTableComponent(props: ReactTableComponentProps) {
     allowAddNewRow,
     allowRowSelection,
     allowSorting,
-    applyFilter,
     borderColor,
     borderWidth,
     canFreezeColumn,
@@ -121,12 +120,12 @@ function ReactTableComponent(props: ReactTableComponentProps) {
     onBulkEditSave,
     onConnectData,
     onRowClick,
+    onSearch,
     pageNo,
     pageSize,
     prevPageClick,
     primaryColumnId,
     searchKey,
-    searchTableData,
     selectAllRow,
     selectedRowIndex,
     selectedRowIndices,
@@ -199,7 +198,6 @@ function ReactTableComponent(props: ReactTableComponentProps) {
     <Table
       accentColor={props.accentColor}
       allowAddNewRow={allowAddNewRow}
-      applyFilter={applyFilter}
       borderColor={borderColor}
       borderRadius={props.borderRadius}
       borderWidth={borderWidth}
@@ -215,6 +213,7 @@ function ReactTableComponent(props: ReactTableComponentProps) {
       editMode={editMode}
       editableCell={editableCell}
       enableDrag={memoziedEnableDrag}
+      excludeFromTabOrder={props.excludeFromTabOrder}
       filters={filters}
       handleColumnFreeze={handleColumnFreeze}
       handleReorderColumn={handleReorderColumn}
@@ -234,12 +233,12 @@ function ReactTableComponent(props: ReactTableComponentProps) {
       onBulkEditDiscard={onBulkEditDiscard}
       onBulkEditSave={onBulkEditSave}
       onConnectData={onConnectData}
+      onSearch={onSearch}
       pageNo={pageNo - 1}
       pageSize={pageSize || 1}
       prevPageClick={prevPageClick}
       primaryColumnId={primaryColumnId}
       searchKey={searchKey}
-      searchTableData={searchTableData}
       selectTableRow={selectTableRow}
       selectedRowIndex={selectedRowIndex}
       selectedRowIndices={selectedRowIndices}
@@ -260,7 +259,6 @@ function ReactTableComponent(props: ReactTableComponentProps) {
 
 export default React.memo(ReactTableComponent, (prev, next) => {
   return (
-    prev.applyFilter === next.applyFilter &&
     prev.compactMode === next.compactMode &&
     prev.delimiter === next.delimiter &&
     prev.disableDrag === next.disableDrag &&
@@ -281,7 +279,7 @@ export default React.memo(ReactTableComponent, (prev, next) => {
     prev.pageSize === next.pageSize &&
     prev.prevPageClick === next.prevPageClick &&
     prev.searchKey === next.searchKey &&
-    prev.searchTableData === next.searchTableData &&
+    prev.onSearch === next.onSearch &&
     prev.selectedRowIndex === next.selectedRowIndex &&
     prev.selectedRowIndices === next.selectedRowIndices &&
     prev.serverSidePaginationEnabled === next.serverSidePaginationEnabled &&

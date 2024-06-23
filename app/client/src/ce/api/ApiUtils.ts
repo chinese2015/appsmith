@@ -21,21 +21,23 @@ import { AUTH_LOGIN_URL } from "constants/routes";
 import { getCurrentGitBranch } from "selectors/gitSyncSelectors";
 import getQueryParamsObject from "utils/getQueryParamsObject";
 import { UserCancelledActionExecutionError } from "sagas/ActionExecution/errorUtils";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { getAppsmithConfigs } from "@appsmith/configs";
 import * as Sentry from "@sentry/react";
 import { CONTENT_TYPE_HEADER_KEY } from "constants/ApiEditorConstants/CommonApiConstants";
 import { isAirgapped } from "@appsmith/utils/airgapHelpers";
 import { getCurrentEnvironmentId } from "@appsmith/selectors/environmentSelectors";
+import { UNUSED_ENV_ID } from "constants/EnvironmentContants";
 
 const executeActionRegex = /actions\/execute/;
 const timeoutErrorRegex = /timeout of (\d+)ms exceeded/;
 export const axiosConnectionAbortedCode = "ECONNABORTED";
 const appsmithConfig = getAppsmithConfigs();
 
+export const DEFAULT_ENV_ID = UNUSED_ENV_ID;
+
 export const BLOCKED_ROUTES = [
   "v1/app-templates",
-  "v1/marketplace",
   "v1/datasources/mocks",
   "v1/usage-pulse",
   "v1/applications/releaseItems",
@@ -108,7 +110,7 @@ export const apiRequestInterceptor = (config: AxiosRequestConfig) => {
     const activeEnv = getCurrentEnvironmentId(state);
 
     if (activeEnv && config.headers) {
-      config.headers.environmentId = activeEnv;
+      config.headers["X-Appsmith-EnvironmentId"] = activeEnv;
     }
   }
 
@@ -254,4 +256,9 @@ export const apiFailureResponseInterceptor = async (error: any) => {
   }
   log.debug(error.config);
   return Promise.resolve(error);
+};
+
+// function to get the default environment
+export const getDefaultEnvId = () => {
+  return DEFAULT_ENV_ID;
 };

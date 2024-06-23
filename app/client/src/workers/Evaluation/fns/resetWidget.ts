@@ -5,6 +5,7 @@ import {
   canvasWidgets,
   dataTreeEvaluator,
   canvasWidgetsMeta,
+  metaWidgetsCache,
 } from "../handlers/evalTree";
 import _ from "lodash";
 import type {
@@ -14,7 +15,7 @@ import type {
 import { isWidget } from "@appsmith/workers/Evaluation/evaluationUtils";
 import { klona } from "klona";
 import { getDynamicBindings, isDynamicValue } from "utils/DynamicBindingUtils";
-import evaluateSync from "../evaluate";
+import evaluateSync, { setEvalContext } from "../evaluate";
 import type { DescendantWidgetMap } from "sagas/WidgetOperationUtils";
 import type { MetaState } from "reducers/entityReducers/metaReducer";
 import type { CanvasWidgetsReduxState } from "reducers/entityReducers/canvasWidgetsReducer";
@@ -42,7 +43,7 @@ async function resetWidget(
   ...args: [widgetName: string, resetChildren: boolean]
 ) {
   const widgetName = args[0];
-  const resetChildren = args[1] || true;
+  const resetChildren = args[1];
   const metaUpdates: EvalMetaUpdates = [];
   const updatedProperties: string[][] = [];
 
@@ -66,19 +67,26 @@ function resetWidgetMetaProperty(
   evalMetaUpdates: EvalMetaUpdates,
   updatedProperties: string[][],
 ) {
-  const widget: FlattenedWidgetProps | undefined = _.find(
+  if (!dataTreeEvaluator) return;
+
+  let widget: FlattenedWidgetProps | undefined = _.find(
     Object.values(canvasWidgets || {}),
     (widget) => widget.widgetName === widgetName,
   );
 
-  if (!dataTreeEvaluator || !widget) return;
+  if (!widget) {
+    widget = _.find(
+      Object.values(metaWidgetsCache || {}),
+      (widget) => widget.widgetName === widgetName,
+    );
+  }
+
+  if (!widget) return;
 
   const evalTree = dataTreeEvaluator.getEvalTree();
   const oldUnEvalTree = dataTreeEvaluator.getOldUnevalTree();
   const configTree = dataTreeEvaluator.getConfigTree();
   const evalProps = dataTreeEvaluator.getEvalProps();
-  const evalPathsIdenticalToState =
-    dataTreeEvaluator.getEvalPathsIdenticalToState();
 
   const evaluatedEntity = evalTree[widget.widgetName];
   const evaluatedEntityConfig = configTree[
@@ -118,6 +126,14 @@ function resetWidgetMetaProperty(
           finalValue = klona(expressionToEvaluate);
         }
 
+        // Switch back to async evaluation once done with sync tasks.
+        setEvalContext({
+          dataTree: evalTree,
+          configTree: dataTreeEvaluator.getConfigTree(),
+          isDataField: false,
+          isTriggerBased: true,
+        });
+
         const parsedValue = validateAndParseWidgetProperty({
           fullPropertyPath: `${widget.widgetName}.${defaultPropertyPath}`,
           widget: unEvalEntity,
@@ -125,11 +141,12 @@ function resetWidgetMetaProperty(
           evalPropertyValue: finalValue,
           unEvalPropertyValue: expressionToEvaluate,
           evalProps,
-          evalPathsIdenticalToState,
         });
 
         evalMetaUpdates.push({
-          widgetId: evaluatedEntity.widgetId,
+          widgetId: evaluatedEntity.isMetaWidget
+            ? (evaluatedEntity.metaWidgetId as string)
+            : evaluatedEntity.widgetId,
           metaPropertyPath: propertyPath.split("."),
           value: parsedValue,
         });
@@ -137,7 +154,9 @@ function resetWidgetMetaProperty(
         continue;
       } else {
         evalMetaUpdates.push({
-          widgetId: evaluatedEntity.widgetId,
+          widgetId: evaluatedEntity.isMetaWidget
+            ? (evaluatedEntity.metaWidgetId as string)
+            : evaluatedEntity.widgetId,
           metaPropertyPath: propertyPath.split("."),
           value: undefined,
         });
@@ -250,7 +269,6 @@ export function getWidgetDescendantToReset(
       }
     }
   }
-
   return descendantList;
 }
 

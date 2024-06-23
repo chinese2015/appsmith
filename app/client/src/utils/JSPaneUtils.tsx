@@ -1,9 +1,8 @@
 //check difference for after body change and parsing
 import type { JSCollection, JSAction, Variable } from "entities/JSCollection";
-import { ENTITY_TYPE } from "entities/AppsmithConsole";
+import { ENTITY_TYPE } from "@appsmith/entities/AppsmithConsole/utils";
 import LOG_TYPE from "entities/AppsmithConsole/logtype";
 import AppsmithConsole from "utils/AppsmithConsole";
-import { isEmpty, isEqual, xorWith } from "lodash";
 
 export interface ParsedJSSubAction {
   name: string;
@@ -21,13 +20,25 @@ export interface JSUpdate {
   parsedBody: ParsedBody | undefined;
 }
 
-export const getDifferenceInJSArgumentArrays = (x: any, y: any) =>
-  isEmpty(xorWith(x, y, isEqual));
+export interface JSCollectionDifference {
+  newActions: Partial<JSAction>[];
+  updateActions: JSAction[];
+  deletedActions: JSAction[];
+  nameChangedActions: Array<{
+    id: string;
+    collectionId?: string;
+    oldName: string;
+    newName: string;
+    pageId: string;
+    moduleId?: string;
+  }>;
+  changedVariables: Variable[];
+}
 
 export const getDifferenceInJSCollection = (
   parsedBody: ParsedBody,
   jsAction: JSCollection,
-) => {
+): JSCollectionDifference => {
   const newActions: ParsedJSSubAction[] = [];
   const toBearchivedActions: JSAction[] = [];
   const toBeUpdatedActions: JSAction[] = [];
@@ -40,13 +51,7 @@ export const getDifferenceInJSCollection = (
       const action = parsedBody.actions[i];
       const preExisted = jsAction.actions.find((js) => js.name === action.name);
       if (preExisted) {
-        if (
-          preExisted.actionConfiguration.body !== action.body ||
-          !getDifferenceInJSArgumentArrays(
-            preExisted.actionConfiguration.jsArguments,
-            action.arguments,
-          )
-        ) {
+        if (preExisted.actionConfiguration.body !== action.body) {
           toBeUpdatedActions.push({
             ...preExisted,
             actionConfiguration: {
@@ -98,6 +103,7 @@ export const getDifferenceInJSCollection = (
             oldName: updateExisting.name,
             newName: newActions[i].name,
             pageId: updateExisting.pageId,
+            moduleId: updateExisting.moduleId,
           });
           newActions.splice(i, 1);
           toBearchivedActions.splice(indexOfArchived, 1);
@@ -133,8 +139,9 @@ export const getDifferenceInJSCollection = (
       jsAction.actions.splice(deleteArchived, 1);
     }
   }
-  //change in variables
-  const varList = jsAction.variables;
+  //change in variables. In cases the variable list is not present, jsAction.variables will be undefined
+  // we are setting to empty array to avoid undefined errors further in the code (especially in case of workflows main file)
+  const varList = jsAction.variables || [];
   let changedVariables: Array<Variable> = [];
   if (parsedBody.variables.length) {
     for (let i = 0; i < parsedBody.variables.length; i++) {
@@ -155,7 +162,7 @@ export const getDifferenceInJSCollection = (
       }
     }
   } else {
-    changedVariables = jsAction.variables;
+    changedVariables = varList;
   }
   //delete variable
   if (varList && varList.length > 0 && parsedBody.variables) {
@@ -212,7 +219,7 @@ export const createDummyJSCollectionActions = (
       workspaceId,
       executeOnLoad: false,
       actionConfiguration: {
-        body: "function (){\n\t\t//\twrite code here\n\t\t//\tthis.myVar1 = [1,2,3]\n\t}",
+        body: "function () {}",
         timeoutInMillisecond: 0,
         jsArguments: [],
       },
@@ -224,7 +231,7 @@ export const createDummyJSCollectionActions = (
       workspaceId,
       executeOnLoad: false,
       actionConfiguration: {
-        body: "async function () {\n\t\t//\tuse async-await or promises\n\t\t//\tawait storeValue('varName', 'hello world')\n\t}",
+        body: "async function () {}",
         timeoutInMillisecond: 0,
         jsArguments: [],
       },
@@ -236,13 +243,44 @@ export const createDummyJSCollectionActions = (
   const variables = [
     {
       name: "myVar1",
-      value: [],
+      value: "[]",
     },
     {
       name: "myVar2",
-      value: {},
+      value: "{}",
     },
   ];
+
+  return {
+    actions,
+    body,
+    variables,
+  };
+};
+
+export const createSingleFunctionJsCollection = (
+  workspaceId: string,
+  functionName: string,
+  additionalParams: Record<string, unknown> = {},
+) => {
+  const body = `export default {\n\t${functionName} () {\n\t\t//\twrite code here\n\t}\n}`;
+
+  const actions = [
+    {
+      name: functionName,
+      workspaceId,
+      executeOnLoad: false,
+      actionConfiguration: {
+        body: "function () {}",
+        timeoutInMillisecond: 0,
+        jsArguments: [],
+      },
+      clientSideExecution: true,
+      ...additionalParams,
+    },
+  ];
+
+  const variables: Variable[] = [];
 
   return {
     actions,

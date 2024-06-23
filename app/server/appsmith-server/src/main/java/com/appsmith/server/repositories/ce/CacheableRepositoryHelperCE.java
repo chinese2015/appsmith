@@ -1,5 +1,6 @@
 package com.appsmith.server.repositories.ce;
 
+import com.appsmith.server.domains.Tenant;
 import com.appsmith.server.domains.User;
 import reactor.core.publisher.Mono;
 
@@ -15,11 +16,11 @@ public interface CacheableRepositoryHelperCE {
 
     Mono<Void> evictPermissionGroupsUser(String email, String tenantId);
 
-    Mono<User> getAnonymousUser(String tenantId);
-
-    Mono<User> getAnonymousUser();
-
     Mono<String> getDefaultTenantId();
 
     Mono<String> getInstanceAdminPermissionGroupId();
+
+    Mono<Tenant> fetchDefaultTenant(String tenantId);
+
+    Mono<Void> evictCachedTenant(String tenantId);
 }

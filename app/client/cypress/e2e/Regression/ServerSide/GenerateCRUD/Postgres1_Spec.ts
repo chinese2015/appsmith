@@ -11,10 +11,10 @@ import {
   locators,
   table,
 } from "../../../../support/Objects/ObjectsCore";
-import {
+import EditorNavigation, {
   AppSidebar,
   AppSidebarButton,
-  PageLeftPane,
+  EntityType,
 } from "../../../../support/Pages/EditorNavigation";
 import PageList from "../../../../support/Pages/PageList";
 
@@ -49,7 +49,7 @@ describe(
       deployMode.NavigateBacktoEditor();
       table.WaitUntilTableLoad(0, 0, "v2");
       //Delete the test data
-      PageLeftPane.expandCollapseItem("Pages");
+      PageList.ShowList();
       entityExplorer.ActionContextMenuByEntityName({
         entityNameinLeftSidebar: "Page2",
         action: "Delete",
@@ -102,9 +102,8 @@ describe(
     });
 
     it("3. Generate CRUD page from datasource present in ACTIVE section", function () {
-      dataSources.GeneratePageForDS(dsName);
-      agHelper.GetNClick(dataSources._selectTableDropdown, 0, true);
-      agHelper.GetNClickByContains(dataSources._dropdownOption, "orders");
+      EditorNavigation.SelectEntityByName(dsName, EntityType.Datasource);
+      dataSources.SelectTableFromPreviewSchemaList("public.orders");
 
       GenerateCRUDNValidateDeployPage(
         "VINET",
@@ -116,7 +115,7 @@ describe(
       deployMode.NavigateBacktoEditor();
       table.WaitUntilTableLoad(0, 0, "v2");
       //Delete the test data
-      PageLeftPane.expandCollapseItem("Pages");
+      PageList.ShowList();
       entityExplorer.ActionContextMenuByEntityName({
         entityNameinLeftSidebar: "Public.orders",
         action: "Delete",
@@ -136,7 +135,9 @@ describe(
       col3Text: string,
       jsonFromHeader: string,
     ) {
-      agHelper.GetNClick(dataSources._generatePageBtn);
+      agHelper.GetNClick(
+        `${dataSources._generatePageBtn}, ${dataSources._datasourceCardGeneratePageBtn}`,
+      );
       assertHelper.AssertNetworkStatus("@replaceLayoutWithCRUDPage", 201);
       agHelper.AssertContains("Successfully generated a page");
       //assertHelper.AssertNetworkStatus("@getActions", 200);//Since failing sometimes

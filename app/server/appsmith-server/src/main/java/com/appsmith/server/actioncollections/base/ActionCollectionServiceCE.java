@@ -14,7 +14,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ActionCollectionServiceCE extends CrudService<ActionCollection, String> {
 
@@ -26,6 +25,8 @@ public interface ActionCollectionServiceCE extends CrudService<ActionCollection,
     Mono<ActionCollection> save(ActionCollection collection);
 
     Flux<ActionCollection> saveAll(List<ActionCollection> collections);
+
+    Mono<ActionCollection> findByIdAndBranchName(String id, String branchName);
 
     Flux<ActionCollectionDTO> getPopulatedActionCollectionsByViewMode(
             MultiValueMap<String, String> params, Boolean viewMode);
@@ -45,6 +46,9 @@ public interface ActionCollectionServiceCE extends CrudService<ActionCollection,
 
     Mono<ActionCollectionDTO> deleteUnpublishedActionCollection(String id);
 
+    Mono<ActionCollectionDTO> deleteUnpublishedActionCollection(
+            String id, AclPermission deleteCollectionPermission, AclPermission deleteActionPermission);
+
     Mono<ActionCollectionDTO> deleteWithoutPermissionUnpublishedActionCollection(String id);
 
     Mono<ActionCollectionDTO> deleteUnpublishedActionCollection(String id, String branchName);
@@ -60,9 +64,12 @@ public interface ActionCollectionServiceCE extends CrudService<ActionCollection,
 
     Flux<ActionCollection> findByPageId(String pageId);
 
-    Flux<ActionCollection> findByPageIds(List<String> pageIds, Optional<AclPermission> permission);
+    Flux<ActionCollectionDTO> getCollectionsByPageIdAndViewMode(
+            String pageId, boolean viewMode, AclPermission permission);
 
-    Flux<ActionCollection> findByPageIdsForExport(List<String> pageIds, Optional<AclPermission> permission);
+    Flux<ActionCollection> findByPageIdsForExport(List<String> pageIds, AclPermission permission);
+
+    Mono<ActionCollection> archiveById(String id);
 
     Mono<ActionCollection> findByBranchNameAndDefaultCollectionId(
             String branchName, String defaultCollectionId, AclPermission permission);
@@ -78,6 +85,10 @@ public interface ActionCollectionServiceCE extends CrudService<ActionCollection,
     Mono<ActionCollectionDTO> validateAndSaveCollection(ActionCollection actionCollection);
 
     Mono<ActionCollectionViewDTO> generateActionCollectionViewDTO(ActionCollection actionCollection);
+
+    Mono<Void> bulkValidateAndInsertActionCollectionInRepository(List<ActionCollection> actionCollectionList);
+
+    Mono<Void> bulkValidateAndUpdateActionCollectionInRepository(List<ActionCollection> actionCollectionList);
 
     Mono<Void> saveLastEditInformationInParent(ActionCollectionDTO actionCollectionDTO);
 }

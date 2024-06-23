@@ -154,6 +154,16 @@ public class DatasourceStorageServiceCEImpl implements DatasourceStorageServiceC
                 .flatMap(this::populateHintMessages);
     }
 
+    public Mono<DatasourceStorage> executePreSaveActions(DatasourceStorage datasourceStorage) {
+        Mono<Plugin> pluginMono = pluginService.findById(datasourceStorage.getPluginId());
+        Mono<PluginExecutor> pluginExecutorMono = pluginExecutorHelper
+                .getPluginExecutor(pluginMono)
+                .switchIfEmpty(Mono.error(new AppsmithException(
+                        AppsmithError.NO_RESOURCE_FOUND, FieldName.PLUGIN, datasourceStorage.getPluginId())));
+
+        return pluginExecutorMono.flatMap(pluginExecutor -> pluginExecutor.preSaveHook(datasourceStorage));
+    }
+
     @Override
     public Mono<DatasourceStorage> validateDatasourceStorage(DatasourceStorage datasourceStorage) {
 
@@ -206,15 +216,9 @@ public class DatasourceStorageServiceCEImpl implements DatasourceStorageServiceC
         return Mono.just(datasourceStorage)
                 .map(this::sanitizeDatasourceStorage)
                 .flatMap(datasourceStorage1 -> validateDatasourceStorage(datasourceStorage1))
-                .flatMap(unsavedDatasourceStorage -> {
-                    return repository.save(unsavedDatasourceStorage).map(datasourceStorage1 -> {
-                        // datasourceStorage.pluginName is a transient field. It was set by validateDatasource method
-                        // object from db will have pluginName=null so set it manually from the unsaved
-                        // datasourceStorage obj
-                        datasourceStorage1.setPluginName(unsavedDatasourceStorage.getPluginName());
-                        return datasourceStorage1;
-                    });
-                });
+                .flatMap(this::executePreSaveActions)
+                .flatMap(unsavedDatasourceStorage ->
+                        repository.save(unsavedDatasourceStorage).thenReturn(unsavedDatasourceStorage));
     }
 
     @Override
@@ -240,7 +244,12 @@ public class DatasourceStorageServiceCEImpl implements DatasourceStorageServiceC
 
     @Override
     public Mono<DatasourceStorage> populateHintMessages(DatasourceStorage datasourceStorage) {
+        return this.populateHintMessages(datasourceStorage, null);
+    }
 
+    @Override
+    public Mono<DatasourceStorage> populateHintMessages(
+            DatasourceStorage datasourceStorage, Map<String, Plugin> pluginsMap) {
         if (datasourceStorage == null) {
             /*
              * - Not throwing an exception here because we do not throw an error in case of missing datasourceStorage.
@@ -257,7 +266,13 @@ public class DatasourceStorageServiceCEImpl implements DatasourceStorageServiceC
             return Mono.just(datasourceStorage);
         }
 
-        final Mono<Plugin> pluginMono = pluginService.findById(datasourceStorage.getPluginId());
+        Mono<Plugin> pluginMono;
+        if (pluginsMap == null) {
+            pluginMono = pluginService.findById(datasourceStorage.getPluginId());
+        } else {
+            pluginMono = Mono.justOrEmpty(pluginsMap.get(datasourceStorage.getPluginId()));
+        }
+
         Mono<PluginExecutor> pluginExecutorMono = pluginExecutorHelper
                 .getPluginExecutor(pluginMono)
                 .switchIfEmpty(Mono.error(new AppsmithException(

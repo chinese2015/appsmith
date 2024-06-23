@@ -11,12 +11,16 @@ export type TextAreaRef = Ref<HTMLDivElement>;
 
 function TextArea(props: TextAreaProps, ref: TextAreaRef) {
   const {
+    defaultValue,
     isDisabled = false,
     isReadOnly = false,
     isRequired = false,
     onChange,
+    value,
     ...otherProps
   } = props;
+
+  const isEmpty = isReadOnly && !Boolean(value) && !Boolean(defaultValue);
 
   // not in stately because this is so we know when to re-measure, which is a spectrum design
   const [inputValue, setInputValue] = useControlledState(
@@ -44,9 +48,17 @@ function TextArea(props: TextAreaProps, ref: TextAreaRef) {
       }
       input.style.alignSelf = "start";
       input.style.height = "auto";
-      // offsetHeight - clientHeight accounts for the border/padding.
+
+      const computedStyle = getComputedStyle(input);
+      const paddingTop = parseFloat(computedStyle.paddingTop);
+      const paddingBottom = parseFloat(computedStyle.paddingBottom);
       input.style.height = `${
-        input.scrollHeight + (input.offsetHeight - input.clientHeight)
+        // subtract comptued padding and border to get the actual content height
+        input.scrollHeight -
+        paddingTop -
+        paddingBottom +
+        // Also, adding 1px to fix a bug in browser where there is a scrolllbar on certain heights
+        1
       }px`;
       input.style.overflow = prevOverflow;
       input.style.alignSelf = prevAlignment;
@@ -70,6 +82,8 @@ function TextArea(props: TextAreaProps, ref: TextAreaRef) {
     useTextField(
       {
         ...props,
+        value: isEmpty ? "—" : value,
+        defaultValue,
         onChange: chain(onChange, setInputValue),
         inputElementType: "textarea",
       },

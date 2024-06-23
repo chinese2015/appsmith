@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { connect, useSelector } from "react-redux";
 import type { AppState } from "@appsmith/reducers";
-import { getCurrentAppWorkspace } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentAppWorkspace } from "@appsmith/selectors/selectedWorkspaceSelectors";
 import { ReduxActionTypes } from "@appsmith/constants/ReduxActionConstants";
 import {
   isPermitted,
@@ -22,7 +22,7 @@ import {
 } from "@appsmith/constants/messages";
 import { hasInviteUserToApplicationPermission } from "@appsmith/utils/permissionHelpers";
 import { Button, Icon, Switch, Tooltip } from "design-system";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { useFeatureFlag } from "utils/hooks/useFeatureFlag";
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
 

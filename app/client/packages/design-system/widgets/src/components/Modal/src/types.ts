@@ -3,17 +3,23 @@ import type {
   PopoverProps,
 } from "@design-system/headless";
 import type { ReactNode } from "react";
+import type { SIZES } from "../../../shared";
 
 export interface ModalProps
   extends Pick<
       PopoverProps,
-      "isOpen" | "setOpen" | "onClose" | "triggerRef" | "initialFocus"
+      | "isOpen"
+      | "setOpen"
+      | "onClose"
+      | "triggerRef"
+      | "initialFocus"
+      | "dismissClickOutside"
     >,
     Pick<PopoverModalContentProps, "overlayClassName"> {
   /** Size of the Modal
    * @default medium
    */
-  size?: "small" | "medium" | "large";
+  size?: keyof typeof SIZES;
   /** The children of the component. */
   children: ReactNode;
 }
@@ -28,6 +34,7 @@ export interface ModalContentProps {
 export interface ModalHeaderProps {
   /** Adds a header modal Title and the necessary aria attributes. */
   title: string;
+  excludeFromTabOrder?: boolean;
 }
 
 export interface ModalFooterProps {
@@ -41,8 +48,13 @@ export interface ModalFooterProps {
   closeText?: string;
   /** The event that is triggered when the submit button is clicked. */
   onSubmit?: () => void;
+  excludeFromTabOrder?: boolean;
+  /** Defines if the modal should close when submit button is pressed */
+  closeOnSubmit?: boolean;
 }
 
 export interface ModalBodyProps {
   children: ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
 }

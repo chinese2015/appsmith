@@ -27,6 +27,7 @@ import {
 } from "WidgetProvider/constants";
 import { WIDGET_TAGS } from "constants/WidgetConstants";
 import IconSVG from "../icon.svg";
+import ThumbnailSVG from "../thumbnail.svg";
 import { ButtonBoxShadowTypes } from "components/constants";
 import { Colors } from "constants/Colors";
 import { FILL_WIDGET_MIN_WIDTH } from "constants/minWidthConstants";
@@ -58,6 +59,7 @@ export class ContainerWidget extends BaseWidget<
     return {
       name: "Container",
       iconSVG: IconSVG,
+      thumbnailSVG: ThumbnailSVG,
       tags: [WIDGET_TAGS.LAYOUT],
       isCanvas: true,
       searchTags: ["div", "parent", "group"],
@@ -291,8 +293,7 @@ export class ContainerWidget extends BaseWidget<
           {
             propertyName: "borderRadius",
             label: "Border radius",
-            helpText:
-              "Rounds the corners of the icon button's outer border edge",
+            helpText: "Rounds the corners of the widgets's outer border edge",
             controlType: "BORDER_RADIUS_OPTIONS",
             isJSConvertible: true,
             isBindProperty: true,

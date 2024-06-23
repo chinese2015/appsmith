@@ -26,7 +26,7 @@ import { ReduxActionTypes } from "@appsmith/constants/ReduxActionConstants";
 import { setWorkspaceIdForImport } from "@appsmith/actions/applicationActions";
 import { setIsGitSyncModalOpen } from "actions/gitSyncActions";
 import { GitSyncModalTab } from "entities/GitSync";
-import { getCurrentAppWorkspace } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentAppWorkspace } from "@appsmith/selectors/selectedWorkspaceSelectors";
 import history from "utils/history";
 import noop from "lodash/noop";
 import { hasCreateNewAppPermission } from "@appsmith/utils/permissionHelpers";
@@ -41,7 +41,8 @@ import {
   NEED_EMPTY_REPO_MESSAGE,
   createMessage,
 } from "@appsmith/constants/messages";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
+import { getCurrentApplicationId } from "selectors/editorSelectors";
 
 const WellInnerContainer = styled.div`
   padding-left: 16px;
@@ -70,6 +71,7 @@ function ChooseGitProvider({
   onChange = noop,
   value = {},
 }: ChooseGitProviderProps) {
+  const appId = useSelector(getCurrentApplicationId);
   const workspace = useSelector(getCurrentAppWorkspace);
   const isMobile = useIsMobileDevice();
 
@@ -80,7 +82,12 @@ function ChooseGitProvider({
     dispatch({
       type: ReduxActionTypes.GIT_INFO_INIT,
     });
-    dispatch(setWorkspaceIdForImport(workspace.id));
+    dispatch(
+      setWorkspaceIdForImport({
+        editorId: appId || "",
+        workspaceId: workspace.id,
+      }),
+    );
 
     dispatch(
       setIsGitSyncModalOpen({

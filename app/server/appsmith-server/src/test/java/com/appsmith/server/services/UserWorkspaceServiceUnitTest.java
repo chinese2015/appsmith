@@ -103,8 +103,7 @@ public class UserWorkspaceServiceUnitTest {
         List<Workspace> workspaceList = new ArrayList<>(4);
         for (int i = 1; i <= 4; i++) {
             Workspace workspace = new Workspace();
-            workspace.setId("org-" + i);
-            workspace.setName(workspace.getId());
+            workspace.setName(UUID.randomUUID().toString());
             workspaceList.add(workspace);
         }
         return Flux.fromIterable(workspaceList)
@@ -194,7 +193,7 @@ public class UserWorkspaceServiceUnitTest {
 
         StepVerifier.create(listMono)
                 .assertNext(workspaceMemberInfoDTOS -> {
-                    assertThat(workspaceMemberInfoDTOS.size()).isEqualTo(1);
+                    assertThat(workspaceMemberInfoDTOS).hasSize(1);
                     assertThat(workspaceMemberInfoDTOS.get(0).getPhotoId()).isEqualTo("sample-photo-id");
                 })
                 .verifyComplete();
@@ -226,8 +225,7 @@ public class UserWorkspaceServiceUnitTest {
 
         StepVerifier.create(mapMono)
                 .assertNext(workspaceMemberInfoDTOSMap -> {
-                    assertThat(workspaceMemberInfoDTOSMap.size())
-                            .isEqualTo(2); // should have 2 entries for 2 workspaces
+                    assertThat(workspaceMemberInfoDTOSMap).hasSize(2); // should have 2 entries for 2 workspaces
                     workspaceMemberInfoDTOSMap.values().forEach(workspaceMemberInfoDTOS -> {
                         // should have one entry for the creator member only, get that
                         MemberInfoDTO workspaceMemberInfoDTO = workspaceMemberInfoDTOS.get(0);
@@ -254,7 +252,7 @@ public class UserWorkspaceServiceUnitTest {
 
         StepVerifier.create(userWorkspaceService.getUserWorkspacesByRecentlyUsedOrder())
                 .assertNext(workspaces -> {
-                    assertThat(workspaces.size()).isEqualTo(4);
+                    assertThat(workspaces).hasSize(4);
                     workspaces.forEach(workspace -> {
                         assertThat(workspaceIds.contains(workspace.getId())).isTrue();
                         assertThat(workspace.getTenantId()).isNotEmpty();
@@ -281,7 +279,7 @@ public class UserWorkspaceServiceUnitTest {
 
         StepVerifier.create(userWorkspaceService.getUserWorkspacesByRecentlyUsedOrder())
                 .assertNext(workspaces -> {
-                    assertThat(workspaces.size()).isEqualTo(4);
+                    assertThat(workspaces).hasSize(4);
                     List<String> fetchedWorkspaceIds = new ArrayList<>();
                     workspaces.forEach(workspace -> {
                         fetchedWorkspaceIds.add(workspace.getId());

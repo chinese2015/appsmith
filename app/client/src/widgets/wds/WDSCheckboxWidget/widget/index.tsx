@@ -29,10 +29,6 @@ class WDSCheckboxWidget extends BaseWidget<CheckboxWidgetProps, WidgetState> {
     return config.methodsConfig;
   }
 
-  static getAutoLayoutConfig() {
-    return {};
-  }
-
   static getAnvilConfig(): AnvilConfig | null {
     return config.anvilConfig;
   }
@@ -99,14 +95,14 @@ class WDSCheckboxWidget extends BaseWidget<CheckboxWidgetProps, WidgetState> {
   getWidgetView() {
     return (
       <Checkbox
+        excludeFromTabOrder={this.props.disableWidgetInteraction}
         id={this.props.widgetId}
         isDisabled={this.props.isDisabled}
+        isInvalid={!this.props.isValid}
         isRequired={this.props.isRequired}
         isSelected={!!this.props.isChecked}
         key={this.props.widgetId}
-        labelPosition={this.props.labelPosition}
         onChange={this.onChange}
-        validationState={this.props.isValid ? "valid" : "invalid"}
       >
         {this.props.label}
       </Checkbox>

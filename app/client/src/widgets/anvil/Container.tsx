@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import React from "react";
 import styled from "styled-components";
 import { generateClassName } from "utils/generators";
-import { Elevations } from "./constants";
+import type { Elevations } from "./constants";
+import { useAnvilWidgetElevationSetter } from "layoutSystems/anvil/editor/canvas/hooks/useAnvilWidgetElevationSetter";
 
 /**
  * This container component wraps the Zone and Section widgets and allows Anvil to utilise tokens from the themes
@@ -16,31 +17,17 @@ const StyledContainerComponent = styled.div<
 >`
   height: 100%;
   width: 100%;
-  overflow: hidden;
   outline: none;
   border: none;
   position: relative;
-
-  ${(props) =>
-    props.elevatedBackground
-      ? `background: var(--color-bg-elevation-${props.elevation}); box-shadow: var(--box-shadow-${props.elevation});`
-      : ""}
-
-  border-radius: var(--border-radius-1);
-  padding-block: var(--outer-spacing-1);
-  padding-inline: var(--outer-spacing-1);
-  ${(props) =>
-    props.elevation === Elevations.SECTION_ELEVATION
-      ? `padding-block: var(--outer-spacing-0); padding-inline: var(--outer-spacing-0);`
-      : ""}
-
-  border-width: var(--border-width-1);
 `;
 
 export function ContainerComponent(props: ContainerComponentProps) {
+  useAnvilWidgetElevationSetter(props.widgetId, props.elevatedBackground);
   return (
     <StyledContainerComponent
       className={`${generateClassName(props.widgetId)}`}
+      data-elevation={props.elevatedBackground}
       elevatedBackground={props.elevatedBackground}
       elevation={props.elevation}
     >

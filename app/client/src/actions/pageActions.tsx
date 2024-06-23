@@ -12,10 +12,11 @@ import {
   ReplayReduxActionTypes,
 } from "@appsmith/constants/ReduxActionConstants";
 import type { DynamicPath } from "utils/DynamicBindingUtils";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import type { WidgetOperation } from "widgets/BaseWidget";
 import type {
   FetchPageRequest,
+  FetchPageResponse,
   PageLayout,
   SavePageResponse,
   UpdatePageRequest,
@@ -25,7 +26,7 @@ import type { UrlDataState } from "reducers/entityReducers/appReducer";
 import type { APP_MODE } from "entities/App";
 import type { CanvasWidgetsReduxState } from "reducers/entityReducers/canvasWidgetsReducer";
 import type { GenerateTemplatePageRequest } from "api/PageApi";
-import type { ENTITY_TYPE } from "entities/AppsmithConsole";
+import type { ENTITY_TYPE } from "@appsmith/entities/AppsmithConsole/utils";
 import type { Replayable } from "entities/Replay/ReplayEntity/ReplayEditor";
 import * as Sentry from "@sentry/react";
 
@@ -43,7 +44,6 @@ export interface CreatePageActionPayload {
   applicationId: string;
   name: string;
   layouts: Partial<PageLayout>[];
-  blockNavigation?: boolean;
 }
 
 export interface updateLayoutOptions {
@@ -55,12 +55,14 @@ export interface updateLayoutOptions {
 export const fetchPage = (
   pageId: string,
   isFirstLoad = false,
+  pageWithMigratedDsl?: FetchPageResponse,
 ): ReduxAction<FetchPageRequest> => {
   return {
     type: ReduxActionTypes.FETCH_PAGE_INIT,
     payload: {
       id: pageId,
       isFirstLoad,
+      pageWithMigratedDsl,
     },
   };
 };
@@ -69,12 +71,14 @@ export const fetchPublishedPage = (
   pageId: string,
   bustCache = false,
   firstLoad = false,
+  pageWithMigratedDsl?: FetchPageResponse,
 ) => ({
   type: ReduxActionTypes.FETCH_PUBLISHED_PAGE_INIT,
   payload: {
     pageId,
     bustCache,
     firstLoad,
+    pageWithMigratedDsl,
   },
 });
 
@@ -171,7 +175,6 @@ export const createPage = (
   pageName: string,
   layouts: Partial<PageLayout>[],
   orgId: string,
-  blockNavigation?: boolean,
   instanceId?: string,
 ) => {
   AnalyticsUtil.logEvent("CREATE_PAGE", {
@@ -185,7 +188,6 @@ export const createPage = (
       applicationId,
       name: pageName,
       layouts,
-      blockNavigation,
     },
   };
 };
@@ -194,7 +196,6 @@ export const createNewPageFromEntities = (
   applicationId: string,
   pageName: string,
   orgId: string,
-  blockNavigation?: boolean,
   instanceId?: string,
 ) => {
   AnalyticsUtil.logEvent("CREATE_PAGE", {
@@ -207,7 +208,6 @@ export const createNewPageFromEntities = (
     payload: {
       applicationId,
       name: pageName,
-      blockNavigation,
     },
   };
 };
@@ -548,18 +548,21 @@ export const resetApplicationWidgets = () => ({
   type: ReduxActionTypes.RESET_APPLICATION_WIDGET_STATE_REQUEST,
 });
 
-export const fetchPageDSLs = () => ({
+export const fetchPageDSLs = (payload?: any) => ({
   type: ReduxActionTypes.POPULATE_PAGEDSLS_INIT,
+  payload,
 });
 
 export const setupPage = (
   pageId: string,
   isFirstLoad = false,
+  pageWithMigratedDsl?: FetchPageResponse,
 ): ReduxAction<FetchPageRequest> => ({
   type: ReduxActionTypes.SETUP_PAGE_INIT,
   payload: {
     id: pageId,
     isFirstLoad,
+    pageWithMigratedDsl,
   },
 });
 
@@ -567,11 +570,13 @@ export const setupPublishedPage = (
   pageId: string,
   bustCache = false,
   firstLoad = false,
+  pageWithMigratedDsl?: FetchPageResponse,
 ) => ({
   type: ReduxActionTypes.SETUP_PUBLISHED_PAGE_INIT,
   payload: {
     pageId,
     bustCache,
     firstLoad,
+    pageWithMigratedDsl,
   },
 });

@@ -13,6 +13,8 @@ import MainPane from "./MainPane";
 import RightPane from "./RightPane";
 import classNames from "classnames";
 import { tailwindLayers } from "constants/Layers";
+import { protectedModeSelector } from "selectors/gitSyncSelectors";
+import ProtectedCallout from "./ProtectedCallout";
 
 /**
  * OldName: MainContainer
@@ -20,9 +22,11 @@ import { tailwindLayers } from "constants/Layers";
 function IDE() {
   const isPreviewMode = useSelector(previewModeSelector);
   const isCombinedPreviewMode = useSelector(combinedPreviewModeSelector);
+  const isProtectedMode = useSelector(protectedModeSelector);
 
   return (
     <>
+      {isProtectedMode && <ProtectedCallout />}
       <EditorWrapperContainer>
         <div
           className={classNames({
@@ -38,7 +42,7 @@ function IDE() {
         <MainPane id="app-body" />
         <div
           className={classNames({
-            [`transition-transform transform duration-400 ${tailwindLayers.propertyPane}`]:
+            [`transition-transform transform duration-400 h-full ${tailwindLayers.propertyPane}`]:
               true,
             relative: !isCombinedPreviewMode,
             "translate-x-full fixed right-0": isCombinedPreviewMode,
@@ -54,4 +58,4 @@ function IDE() {
 
 IDE.displayName = "AppsmithIDE";
 
-export default IDE;
+export default React.memo(IDE);

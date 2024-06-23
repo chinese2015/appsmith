@@ -22,9 +22,12 @@ describe(
     });
 
     it("1. Add, Delete more buttons to the group and verify", function () {
+      const newButtonLabel =
+        Cypress.env("MESSAGES").BUTTON_WIDGET_DEFAULT_LABEL();
+
       agHelper.GetNClick(buttongroupwidgetlocators.newButton);
-      agHelper.TypeText("//*[ @value='Group Button 1']", " New Button");
-      agHelper.AssertContains("Group Button 1 New Button");
+      agHelper.TypeText(`//*[ @value='${newButtonLabel}']`, " New Button");
+      agHelper.AssertContains(`${newButtonLabel} New Button`);
       deployMode.DeployApp();
       agHelper
         .GetElement(buttongroupwidgetlocators.buttongroup)
@@ -150,7 +153,7 @@ describe(
       agHelper.GetNClick(buttongroupwidgetlocators.menu);
       agHelper.GetNClick(buttongroupwidgetlocators.menuSettingInPropPane, 0);
       propPane.TogglePropertyState("Disabled", "On");
-      propPane.TogglePropertyState("Visible", "On", "updateLayout", false);
+      propPane.TogglePropertyState("Visible", "On", "updateLayout");
       agHelper.GetNClick(propPane._goBackToProperty);
       deployMode.DeployApp();
       agHelper.ClickButton("More");
@@ -159,11 +162,11 @@ describe(
     });
 
     it("5. Assert On click button group ", function () {
-      entityExplorer.DragNDropWidget(draggableWidgets.MODAL, 250, 250);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.MODAL, 250, 250);
       agHelper.ClickButton("Close");
       EditorNavigation.SelectEntityByName("ButtonGroup1", EntityType.Widget);
       agHelper.GetNClick(buttongroupwidgetlocators.buttonSettingInPropPane, 0);
-      propPane.EnterJSContext("onClick", "{{showModal('Modal1')}}");
+      propPane.EnterJSContext("onClick", "{{showModal(Modal1.name)}}");
       deployMode.DeployApp();
       agHelper.ClickButton("Favorite");
       agHelper.AssertElementExist(locators._modal);

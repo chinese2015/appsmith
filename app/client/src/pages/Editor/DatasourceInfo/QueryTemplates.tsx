@@ -2,7 +2,6 @@ import React, { useCallback, useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createActionRequest } from "actions/pluginActionActions";
 import type { AppState } from "@appsmith/reducers";
-import { createNewQueryName } from "utils/AppsmithUtils";
 import {
   getCurrentApplicationId,
   getCurrentPageId,
@@ -10,7 +9,7 @@ import {
 import type { QueryAction } from "entities/Action";
 import history from "utils/history";
 import type { Datasource, QueryTemplate } from "entities/Datasource";
-import { DatasourceStructureContext } from "entities/Datasource";
+import type { DatasourceStructureContext } from "entities/Datasource";
 import { INTEGRATION_TABS } from "constants/routes";
 import {
   getAction,
@@ -28,7 +27,7 @@ import { change, getFormValues } from "redux-form";
 import { QUERY_EDITOR_FORM_NAME } from "@appsmith/constants/forms";
 import { diff } from "deep-diff";
 import { UndoRedoToastContext, showUndoRedoToast } from "utils/replayHelpers";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { FEATURE_WALKTHROUGH_KEYS } from "constants/WalkthroughConstants";
 import { SUGGESTED_TAG, createMessage } from "@appsmith/constants/messages";
 import { transformTextToSentenceCase } from "pages/Editor/utils";
@@ -42,7 +41,6 @@ interface QueryTemplatesProps {
 }
 
 enum QueryTemplatesEvent {
-  EXPLORER_TEMPLATE = "explorer-template",
   QUERY_EDITOR_TEMPLATE = "query-editor-template",
 }
 
@@ -81,7 +79,6 @@ export function QueryTemplates(props: QueryTemplatesProps) {
   );
   const createQueryAction = useCallback(
     (template: QueryTemplate) => {
-      const newQueryName = createNewQueryName(actions, currentPageId || "");
       const queryactionConfiguration: Partial<QueryAction> = {
         actionConfiguration: {
           body: template.body,
@@ -93,7 +90,6 @@ export function QueryTemplates(props: QueryTemplatesProps) {
 
       dispatch(
         createActionRequest({
-          name: newQueryName,
           pageId: currentPageId,
           pluginId: dataSource?.pluginId,
           datasource: {
@@ -101,10 +97,7 @@ export function QueryTemplates(props: QueryTemplatesProps) {
           },
           eventData: {
             actionType: "Query",
-            from:
-              props?.context === DatasourceStructureContext.EXPLORER
-                ? QueryTemplatesEvent.EXPLORER_TEMPLATE
-                : QueryTemplatesEvent.QUERY_EDITOR_TEMPLATE,
+            from: QueryTemplatesEvent.QUERY_EDITOR_TEMPLATE,
             dataSource: dataSource?.name,
             datasourceId: props.datasourceId,
             pluginName: plugin?.name,

@@ -28,13 +28,14 @@ import { EvalWorker } from "./EvaluationsSaga";
 import log from "loglevel";
 import { APP_MODE } from "entities/App";
 import { getAppMode } from "@appsmith/selectors/applicationSelectors";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import type { JSLibrary } from "workers/common/JSLibrary";
 import { getUsedActionNames } from "selectors/actionSelectors";
 import AppsmithConsole from "utils/AppsmithConsole";
 import { selectInstalledLibraries } from "@appsmith/selectors/entitiesSelector";
 import { toast } from "design-system";
 import { endSpan, startRootSpan } from "UITelemetry/generateTraces";
+import { getFromServerWhenNoPrefetchedResult } from "./helper";
 
 export function parseErrorMessage(text: string) {
   return text.split(": ").slice(1).join("");
@@ -309,16 +310,23 @@ function* uninstallLibrarySaga(action: ReduxAction<JSLibrary>) {
   }
 }
 
-function* fetchJSLibraries(action: ReduxAction<string>) {
+function* fetchJSLibraries(
+  action: ReduxAction<{
+    applicationId: string;
+    customJSLibraries: ApiResponse;
+  }>,
+) {
   const span = startRootSpan("fetchJSLibraries");
-  const applicationId: string = action.payload;
+  const { applicationId, customJSLibraries } = action.payload;
   const mode: APP_MODE = yield select(getAppMode);
+
   try {
     const response: ApiResponse = yield call(
-      LibraryApi.getLibraries,
-      applicationId,
-      mode,
+      getFromServerWhenNoPrefetchedResult,
+      customJSLibraries,
+      () => call(LibraryApi.getLibraries, applicationId, mode),
     );
+
     const isValidResponse: boolean = yield validateResponse(response);
     if (!isValidResponse) {
       endSpan(span);

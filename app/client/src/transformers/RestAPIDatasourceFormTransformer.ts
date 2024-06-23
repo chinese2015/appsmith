@@ -183,6 +183,7 @@ const formToDatasourceAuthentication = (
         customAuthenticationParameters: cleanupProperties(
           authentication.customAuthenticationParameters,
         ),
+        expiresIn: authentication.expiresIn,
       };
     }
   }
@@ -258,6 +259,7 @@ const datasourceToFormAuthentication = (
         authentication.sendScopeWithRefreshToken || false,
       refreshTokenClientCredentialsLocation:
         authentication.refreshTokenClientCredentialsLocation || "BODY",
+      useSelfSignedCert: authentication.useSelfSignedCert,
     };
     if (isClientCredentials(authType, authentication)) {
       return {
@@ -281,6 +283,7 @@ const datasourceToFormAuthentication = (
           typeof authentication.isAuthorizationHeader === "undefined"
             ? true
             : !!authentication.isAuthorizationHeader,
+        expiresIn: authentication.expiresIn,
       };
     }
   }

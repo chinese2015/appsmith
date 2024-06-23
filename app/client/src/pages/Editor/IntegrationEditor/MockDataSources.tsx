@@ -4,10 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import type { MockDatasource } from "entities/Datasource";
 import { getPluginImages } from "@appsmith/selectors/entitiesSelector";
 import { addMockDatasourceToWorkspace } from "actions/datasourceActions";
-import { getCurrentWorkspaceId } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentWorkspaceId } from "@appsmith/selectors/selectedWorkspaceSelectors";
 import { getQueryParams } from "utils/URLUtils";
 import type { AppState } from "@appsmith/reducers";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { getAssetUrl } from "@appsmith/utils/airgapHelpers";
 import { DatasourceCreateEntryPoints } from "constants/Datasource";
 

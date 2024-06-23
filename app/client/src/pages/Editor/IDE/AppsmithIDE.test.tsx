@@ -14,7 +14,6 @@ import { sagasToRunForTests } from "test/sagas";
 import {
   MockApplication,
   mockCreateCanvasWidget,
-  mockGetCanvasWidgetDsl,
   mockGetPagePermissions,
   mockGetWidgetEvalValues,
   syntheticTestMouseEvent,
@@ -28,13 +27,7 @@ import * as widgetRenderUtils from "utils/widgetRenderUtils";
 import GlobalHotKeys from "../GlobalHotKeys";
 import * as uiSelectors from "selectors/ui";
 
-// Mocking debounce hook that is being used in ThemeProvider to set width
-// This is done so that we render out widgets in this test.
-jest.mock("@react-hook/debounce", () => ({
-  useDebounce: jest.fn(() => {
-    return [1000, jest.fn()];
-  }),
-}));
+const pageId = "0123456789abcdef00000000";
 
 const renderNestedComponent = () => {
   const initialState = store.getState() as unknown as Partial<AppState>;
@@ -88,7 +81,7 @@ const renderNestedComponent = () => {
 
   return render(
     <MemoryRouter
-      initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+      initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
     >
       <MockApplication>
         <GlobalHotKeys>
@@ -102,7 +95,6 @@ const renderNestedComponent = () => {
 
 describe("Drag and Drop widgets into Main container", () => {
   const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-  const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
 
   jest
     .spyOn(widgetRenderUtils, "createCanvasWidget")
@@ -161,12 +153,11 @@ describe("Drag and Drop widgets into Main container", () => {
     const dsl: any = widgetCanvasFactory.build({
       children,
     });
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -265,12 +256,11 @@ describe("Drag and Drop widgets into Main container", () => {
     const dsl: any = widgetCanvasFactory.build({
       children,
     });
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -374,12 +364,11 @@ describe("Drag and Drop widgets into Main container", () => {
   //   const dsl: any = widgetCanvasFactory.build({
   //     children,
   //   });
-  //   spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
   //   mockGetIsFetchingPage.mockImplementation(() => false);
 
   //   const component = render(
   //     <MemoryRouter
-  //       initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+  //       initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
   //     >
   //       <MockApplication>
   //         <GlobalHotKeys>
@@ -484,12 +473,11 @@ describe("Drag and Drop widgets into Main container", () => {
     });
     dsl.bottomRow = 250;
 
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -590,14 +578,13 @@ describe("Drag and Drop widgets into Main container", () => {
     const dsl: any = widgetCanvasFactory.build({
       children,
     });
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
     jest
       .spyOn(utilities, "getPagePermissions")
       .mockImplementation(mockGetPagePermissions);
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -612,12 +599,7 @@ describe("Drag and Drop widgets into Main container", () => {
     const canvasWidgets = component.queryAllByTestId("test-widget");
     // empty canvas
     expect(canvasWidgets.length).toBe(0);
-    const allAddEntityButtons: any =
-      component.container.querySelectorAll(".t--entity-add-btn");
-    const widgetAddButton = allAddEntityButtons[1];
-    act(() => {
-      fireEvent.click(widgetAddButton);
-    });
+
     const containerButton: any = component.queryAllByText("Container");
 
     act(() => {
@@ -699,12 +681,11 @@ describe("Drag and Drop widgets into Main container", () => {
       children: containerChildren,
     });
 
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -792,7 +773,6 @@ describe("Drag and Drop widgets into Main container", () => {
 
 describe("Drag in a nested container", () => {
   const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-  const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
 
   // These need to be at the top to avoid imports not being mocked. ideally should be in setup.ts but will override for all other tests
   beforeAll(() => {
@@ -819,7 +799,6 @@ describe("Drag in a nested container", () => {
   });
 
   it("container drags when focused on", () => {
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = renderNestedComponent();
@@ -891,7 +870,6 @@ describe("Drag in a nested container", () => {
   });
 
   it("nested widget drags when focused on", () => {
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = renderNestedComponent();
@@ -961,7 +939,6 @@ describe("Drag in a nested container", () => {
   });
 
   it("does not let disabledWidget drag and parent widget position stays same", () => {
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = renderNestedComponent();

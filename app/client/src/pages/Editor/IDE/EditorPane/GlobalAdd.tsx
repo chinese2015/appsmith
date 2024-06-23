@@ -1,4 +1,4 @@
-import WidgetSidebarWithTags from "pages/Editor/WidgetSidebarWithTags";
+import UIEntitySidebar from "pages/Editor/widgetSidebar/UIEntitySidebar";
 import React, { useCallback } from "react";
 import styled from "styled-components";
 import { Button, Flex, Icon, Text } from "design-system";
@@ -73,7 +73,7 @@ const GlobalAdd = () => {
           <Button
             className={"t--close-add-editor-button"}
             isIconButton
-            kind="secondary"
+            kind="tertiary"
             onClick={() => history.goBack()}
             size="sm"
             startIcon={"close-line"}
@@ -117,7 +117,7 @@ const GlobalAdd = () => {
         <Flex padding="spaces-3">
           <Text kind="heading-xs">Drag & drop widgets</Text>
         </Flex>
-        <WidgetSidebarWithTags isActive />
+        <UIEntitySidebar isActive />
       </Flex>
     </Flex>
   );

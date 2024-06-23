@@ -8,7 +8,7 @@ import { ToggleButton, Tooltip, Button } from "design-system";
 import PropertyControlFactory from "utils/PropertyControlFactory";
 import PropertyHelpLabel from "pages/Editor/PropertyPane/PropertyHelpLabel";
 import { useDispatch, useSelector } from "react-redux";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import type { UpdateWidgetPropertyPayload } from "actions/controlActions";
 import {
   batchUpdateMultipleWidgetProperties,
@@ -33,7 +33,7 @@ import {
 import type { EnhancementFns } from "selectors/widgetEnhancementSelectors";
 import type { EditorTheme } from "components/editorComponents/CodeEditor/EditorConfig";
 import AppsmithConsole from "utils/AppsmithConsole";
-import { ENTITY_TYPE } from "entities/AppsmithConsole";
+import { ENTITY_TYPE } from "@appsmith/entities/AppsmithConsole/utils";
 import LOG_TYPE from "entities/AppsmithConsole/logtype";
 import { getExpectedValue } from "utils/validation/common";
 import type { ControlData } from "components/propertyControls/BaseControl";
@@ -62,6 +62,8 @@ import type { PropertyUpdates } from "WidgetProvider/constants";
 import { getIsOneClickBindingOptionsVisibility } from "selectors/oneClickBindingSelectors";
 import { useFeatureFlag } from "utils/hooks/useFeatureFlag";
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
+import { savePropertyInSessionStorageIfRequired } from "./helpers";
+import { getParentWidget } from "selectors/widgetSelectors";
 
 const ResetIcon = importSvg(
   async () => import("assets/icons/control/undo_2.svg"),
@@ -70,6 +72,11 @@ const ResetIcon = importSvg(
 const StyledDeviated = styled.div`
   background-color: var(--ads-v2-color-bg-brand);
 `;
+
+const LabelContainer = styled.div<{ hasEditIcon: boolean }>`
+  ${(props) => props.hasEditIcon && "max-width: calc(100% - 110px);"}
+`;
+
 type Props = PropertyPaneControlConfig & {
   panel: IPanelProps;
   theme: EditorTheme;
@@ -94,6 +101,9 @@ const PropertyControl = memo((props: Props) => {
   );
 
   const widgetProperties: WidgetProperties = useSelector(propsSelector, equal);
+  const parentWidget = useSelector((state) =>
+    getParentWidget(state, widgetProperties.widgetId),
+  );
 
   // get the dataTreePath and apply enhancement if exists
   let dataTreePath: string | undefined =
@@ -569,6 +579,15 @@ const PropertyControl = memo((props: Props) => {
         // updating properties of a widget(s) should be done only once when property value changes.
         // to make sure dsl updates are atomic which is a necessity for undo/redo.
         onBatchUpdatePropertiesOfMultipleWidgets(allPropertiesToUpdates);
+
+        savePropertyInSessionStorageIfRequired({
+          isReusable: !!props.isReusable,
+          widgetProperties,
+          propertyName,
+          propertyValue,
+          parentWidgetId: parentWidget?.widgetId,
+          parentWidgetType: parentWidget?.type,
+        });
       }
     },
     [
@@ -628,27 +647,46 @@ const PropertyControl = memo((props: Props) => {
     if (hasRenamingError()) {
       return;
     } else if (editedName.trim() && editedName !== props.propertyName) {
-      let update = {
+      let modify = {
         [editedName]: widgetProperties[props.propertyName],
       };
+
+      let triggerPaths: string[] = [];
 
       if (
         props.controlConfig &&
         typeof props.controlConfig.onEdit === "function"
       ) {
-        update = {
-          ...update,
-          ...props.controlConfig.onEdit(widgetProperties, editedName),
+        const updates = props.controlConfig.onEdit(
+          widgetProperties,
+          editedName,
+        );
+
+        modify = {
+          ...modify,
+          ...updates.modify,
         };
+
+        triggerPaths = updates.triggerPaths;
       }
 
-      onBatchUpdateProperties(update);
+      dispatch(
+        batchUpdateWidgetProperty(widgetProperties.widgetId, {
+          modify,
+          triggerPaths,
+        }),
+      );
+
       onDeleteProperties([props.propertyName]);
     }
     resetEditing();
+
+    AnalyticsUtil.logEvent("CUSTOM_WIDGET_EDIT_EVENT_SAVE_CLICKED", {
+      widgetId: widgetProperties.widgetId,
+    });
   }, [
     props,
-    onBatchUpdateProperties,
+    batchUpdateWidgetProperty,
     onDeleteProperties,
     props.propertyName,
     editedName,
@@ -657,6 +695,10 @@ const PropertyControl = memo((props: Props) => {
   const resetEditing = useCallback(() => {
     setEditedName(props.propertyName);
     setIsRenaming(false);
+
+    AnalyticsUtil.logEvent("CUSTOM_WIDGET_EDIT_EVENT_CANCEL_CLICKED", {
+      widgetId: widgetProperties.widgetId,
+    });
   }, [props.propertyName]);
 
   const { propertyName } = props;
@@ -832,8 +874,8 @@ const PropertyControl = memo((props: Props) => {
     const JSToggleTooltip = isToggleDisabled
       ? JS_TOGGLE_DISABLED_MESSAGE
       : !isDynamic
-      ? JS_TOGGLE_SWITCH_JS_MESSAGE
-      : "";
+        ? JS_TOGGLE_SWITCH_JS_MESSAGE
+        : "";
 
     try {
       return (
@@ -913,8 +955,15 @@ const PropertyControl = memo((props: Props) => {
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <div className={clsx("flex items-center justify-right  gap-1")}>
+              <LabelContainer
+                className={clsx("flex items-center justify-right gap-1")}
+                hasEditIcon={
+                  !!config.controlConfig?.allowEdit ||
+                  !!config.controlConfig?.allowDelete
+                }
+              >
                 <PropertyHelpLabel
+                  className="w-full"
                   label={label}
                   theme={props.theme}
                   tooltip={helpText}
@@ -964,7 +1013,7 @@ const PropertyControl = memo((props: Props) => {
                     </button>
                   </>
                 )}
-              </div>
+              </LabelContainer>
               <div className={clsx("flex items-center justify-right")}>
                 {config.controlConfig?.allowEdit && (
                   <Button
@@ -975,7 +1024,15 @@ const PropertyControl = memo((props: Props) => {
                     )}
                     isIconButton
                     kind="tertiary"
-                    onClick={() => setIsRenaming(true)}
+                    onClick={() => {
+                      setIsRenaming(true);
+                      AnalyticsUtil.logEvent(
+                        "CUSTOM_WIDGET_EDIT_EVENT_CLICKED",
+                        {
+                          widgetId: widgetProperties.widgetId,
+                        },
+                      );
+                    }}
                     size="small"
                     startIcon="pencil-line"
                   />
@@ -1000,6 +1057,13 @@ const PropertyControl = memo((props: Props) => {
                         onBatchUpdateProperties(updates);
                       }
                       onDeleteProperties([config.propertyName]);
+
+                      AnalyticsUtil.logEvent(
+                        "CUSTOM_WIDGET_DELETE_EVENT_CLICKED",
+                        {
+                          widgetId: widgetProperties.widgetId,
+                        },
+                      );
                     }}
                     size="small"
                     startIcon="trash"

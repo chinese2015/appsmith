@@ -6,18 +6,22 @@ import {
   ReduxActionErrorTypes,
   ReduxActionTypes,
 } from "@appsmith/constants/ReduxActionConstants";
-import type { ConnectToGitPayload } from "api/GitSyncAPI";
+import type {
+  ConnectToGitPayload,
+  GitAutocommitProgressResponse,
+} from "api/GitSyncAPI";
 import type { GitConfig, GitSyncModalTab, MergeStatus } from "entities/GitSync";
 import type { GitApplicationMetadata } from "@appsmith/api/ApplicationApi";
-import type {
-  GitStatusData,
-  GitRemoteStatusData,
+import {
+  type GitStatusData,
+  GitSettingsTab,
 } from "reducers/uiReducers/gitSyncReducer";
 import type { ResponseMeta } from "api/ApiResponses";
-import { noop } from "lodash";
 
 export interface GitStatusParams {
   compareRemote?: boolean;
+  onSuccessCallback?: (data: any) => void;
+  onErrorCallback?: (error: Error, response?: any) => void;
 }
 
 export const setIsGitSyncModalOpen = (payload: {
@@ -179,20 +183,6 @@ export const fetchGitStatusInit = (payload?: GitStatusParams) => ({
 
 export const fetchGitStatusSuccess = (payload: GitStatusData) => ({
   type: ReduxActionTypes.FETCH_GIT_STATUS_SUCCESS,
-  payload,
-});
-
-export const fetchGitRemoteStatusInit = ({
-  onErrorCallback = noop,
-  onSuccessCallback = noop,
-} = {}) => ({
-  type: ReduxActionTypes.FETCH_GIT_REMOTE_STATUS_INIT,
-  onSuccessCallback,
-  onErrorCallback,
-});
-
-export const fetchGitRemoteStatusSuccess = (payload: GitRemoteStatusData) => ({
-  type: ReduxActionTypes.FETCH_GIT_REMOTE_STATUS_SUCCESS,
   payload,
 });
 
@@ -486,6 +476,14 @@ export const updateGitProtectedBranchesInit = (payload: {
   };
 };
 
+export const setShowBranchPopupAction = (show: boolean) => {
+  return {
+    type: ReduxActionTypes.GIT_SHOW_BRANCH_POPUP,
+    payload: { show },
+  };
+};
+
+// START autocommit
 export const toggleAutocommitEnabledInit = () => ({
   type: ReduxActionTypes.GIT_TOGGLE_AUTOCOMMIT_ENABLED_INIT,
 });
@@ -495,14 +493,68 @@ export const setIsAutocommitModalOpen = (isAutocommitModalOpen: boolean) => ({
   payload: { isAutocommitModalOpen },
 });
 
-export const startAutocommitProgressPolling = () => ({
+export const triggerAutocommitInitAction = () => ({
+  type: ReduxActionTypes.GIT_AUTOCOMMIT_TRIGGER_INIT,
+});
+
+export const triggerAutocommitSuccessAction = () => ({
+  type: ReduxActionTypes.GIT_AUTOCOMMIT_TRIGGER_SUCCESS,
+});
+
+export interface TriggerAutocommitErrorActionPayload {
+  error: any;
+  show: boolean;
+}
+
+export const triggerAutocommitErrorAction = (
+  payload: TriggerAutocommitErrorActionPayload,
+) => ({
+  type: ReduxActionErrorTypes.GIT_AUTOCOMMIT_TRIGGER_ERROR,
+  payload,
+});
+
+export const startAutocommitProgressPollingAction = () => ({
   type: ReduxActionTypes.GIT_AUTOCOMMIT_START_PROGRESS_POLLING,
 });
 
-export const stopAutocommitProgressPolling = () => ({
+export const stopAutocommitProgressPollingAction = () => ({
   type: ReduxActionTypes.GIT_AUTOCOMMIT_STOP_PROGRESS_POLLING,
 });
 
+export type SetAutocommitActionPayload = GitAutocommitProgressResponse;
+
+export const setAutocommitProgressAction = (
+  payload: SetAutocommitActionPayload,
+) => ({
+  type: ReduxActionTypes.GIT_SET_AUTOCOMMIT_PROGRESS,
+  payload,
+});
+
+export const resetAutocommitProgressAction = () => ({
+  type: ReduxActionTypes.GIT_RESET_AUTOCOMMIT_PROGRESS,
+});
+
+export interface AutocommitProgressErrorActionPayload {
+  error: any;
+  show: boolean;
+}
+
+export const autoCommitProgressErrorAction = (
+  payload: AutocommitProgressErrorActionPayload,
+) => ({
+  type: ReduxActionErrorTypes.GIT_AUTOCOMMIT_PROGRESS_POLLING_ERROR,
+  payload,
+});
+// END autocommit
+
 export const getGitMetadataInitAction = () => ({
   type: ReduxActionTypes.GIT_GET_METADATA_INIT,
+});
+
+export const setGitSettingsModalOpenAction = (payload: {
+  open: boolean;
+  tab?: GitSettingsTab;
+}) => ({
+  type: ReduxActionTypes.GIT_SET_SETTINGS_MODAL_OPEN,
+  payload: { open: payload.open, tab: payload.tab || GitSettingsTab.GENERAL },
 });

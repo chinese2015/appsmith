@@ -61,7 +61,9 @@ export function* createSectionAndAddWidget(
  * @param widgets | WidgetLayoutProps[] : List of dragged widgets.
  * @returns WidgetLayoutProps[][] : List of dragged widgets split by type.
  */
-function splitWidgets(widgets: WidgetLayoutProps[]): WidgetLayoutProps[][] {
+export function splitWidgets(
+  widgets: WidgetLayoutProps[],
+): WidgetLayoutProps[][] {
   const zones: WidgetLayoutProps[] = [];
   const nonZones: WidgetLayoutProps[] = [];
   widgets.forEach((widget: WidgetLayoutProps) => {
@@ -156,6 +158,7 @@ export function* addWidgetsToSection(
    * Can this be prevent during DnD itself? i.e. Don't show highlights for sections that can't handle so many zones.
    */
   const [zones, nonZones] = splitWidgets(draggedWidgets);
+  let itemsAdded = 0;
   /**
    * Step 2: Add zones to the section layout.
    */
@@ -173,13 +176,14 @@ export function* addWidgetsToSection(
       sectionProps,
       sectionLayout,
       sectionComp,
-      highlight,
+      { ...highlight, rowIndex: highlight.rowIndex + itemsAdded },
       zone,
     );
 
     sectionProps = res.canvasWidgets[sectionProps.widgetId];
     sectionLayout = res.section;
     canvasWidgets = res.canvasWidgets;
+    itemsAdded += 1;
   }
 
   /**
@@ -196,7 +200,7 @@ export function* addWidgetsToSection(
         createZoneAndAddWidgets,
         canvasWidgets,
         nonZones,
-        highlight,
+        { ...highlight, rowIndex: highlight.rowIndex + itemsAdded },
         sectionProps.widgetId,
       );
     sectionProps.children = [

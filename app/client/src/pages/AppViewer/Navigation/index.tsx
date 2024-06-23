@@ -8,7 +8,7 @@ import {
   getCurrentPageId,
   getViewModePageList,
 } from "selectors/editorSelectors";
-import { getCurrentWorkspaceId } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentWorkspaceId } from "@appsmith/selectors/selectedWorkspaceSelectors";
 import { getCurrentUser } from "selectors/usersSelectors";
 import type { User } from "constants/userConstants";
 import type { Theme } from "constants/DefaultTheme";
@@ -16,7 +16,6 @@ import { getThemeDetails, ThemeMode } from "selectors/themeSelectors";
 import HtmlTitle from "../AppViewerHtmlTitle";
 import { NAVIGATION_SETTINGS } from "constants/AppConstants";
 import PageMenu from "pages/AppViewer/PageMenu";
-import TourCompletionMessage from "pages/Editor/GuidedTour/TourCompletionMessage";
 import { useHref } from "pages/Editor/utils";
 import { builderURL } from "@appsmith/RouteBuilder";
 import TopHeader from "./components/TopHeader";
@@ -24,7 +23,7 @@ import Sidebar from "./Sidebar";
 import { getCurrentApplication } from "@appsmith/selectors/applicationSelectors";
 import { useIsMobileDevice } from "utils/hooks/useDeviceDetect";
 import { setAppViewHeaderHeight } from "actions/appViewActions";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 
 export function Navigation() {
   const { search } = useLocation();
@@ -137,8 +136,6 @@ export function Navigation() {
           setMenuOpen={setMenuOpen}
           url={editorURL}
         />
-
-        <TourCompletionMessage />
       </div>
     </ThemeProvider>
   );

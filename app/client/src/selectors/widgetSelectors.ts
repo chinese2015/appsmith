@@ -9,6 +9,7 @@ import { getNextEntityName } from "utils/AppsmithUtils";
 
 import WidgetFactory from "WidgetProvider/factory";
 import {
+  getAltBlockWidgetSelection,
   getFocusedWidget,
   getLastSelectedWidget,
   getSelectedWidgets,
@@ -21,6 +22,7 @@ import { getIsTableFilterPaneVisible } from "selectors/tableFilterSelectors";
 import { getIsAutoHeightWithLimitsChanging } from "utils/hooks/autoHeightUIHooks";
 import { getIsPropertyPaneVisible } from "./propertyPaneSelectors";
 import { combinedPreviewModeSelector } from "./editorSelectors";
+import { getIsAnvilLayout } from "layoutSystems/anvil/integrations/selectors";
 
 export const getIsDraggingOrResizing = (state: AppState) =>
   state.ui.widgetDragResize.isResizing || state.ui.widgetDragResize.isDragging;
@@ -29,27 +31,51 @@ export const getIsResizing = (state: AppState) =>
   state.ui.widgetDragResize.isResizing;
 
 const getCanvasWidgets = (state: AppState) => state.entities.canvasWidgets;
-export const getModalDropdownList = createSelector(
+
+// A selector that gets the modal widget type based on the feature flag
+// This will need to be updated once Anvil and WDS are generally available
+export const getModalWidgetType = createSelector(
+  getIsAnvilLayout,
+  (isAnvilLayout: boolean) => {
+    let modalWidgetType = "MODAL_WIDGET";
+    if (isAnvilLayout) {
+      modalWidgetType = "WDS_MODAL_WIDGET";
+    }
+    return modalWidgetType;
+  },
+);
+
+export const getModalWidgets = createSelector(
   getCanvasWidgets,
-  (widgets) => {
+  getModalWidgetType,
+  (widgets, modalWidgetType) => {
     const modalWidgets = Object.values(widgets).filter(
-      (widget: FlattenedWidgetProps) => widget.type === "MODAL_WIDGET",
+      (widget: FlattenedWidgetProps) => widget.type === modalWidgetType,
     );
     if (modalWidgets.length === 0) return undefined;
+    return modalWidgets;
+  },
+);
+
+export const getModalDropdownList = createSelector(
+  getModalWidgets,
+  (modalWidgets) => {
+    if (!modalWidgets) return undefined;
 
     return modalWidgets.map((widget: FlattenedWidgetProps) => ({
       id: widget.widgetId,
       label: widget.widgetName,
-      value: `${widget.widgetName}`,
+      value: `${widget.widgetName}.name`,
     }));
   },
 );
 
 export const getNextModalName = createSelector(
   getExistingWidgetNames,
-  (names) => {
+  getModalWidgetType,
+  (names, modalWidgetType) => {
     const prefix =
-      WidgetFactory.widgetConfigMap.get("MODAL_WIDGET")?.widgetName || "";
+      WidgetFactory.widgetConfigMap.get(modalWidgetType)?.widgetName || "";
     return getNextEntityName(prefix, names);
   },
 );
@@ -87,13 +113,13 @@ export const getParentToOpenSelector = (widgetId: string) => {
 };
 
 // Check if widget is in the list of selected widgets
-export const isWidgetSelected = (widgetId: string) => {
+export const isWidgetSelected = (widgetId?: string) => {
   return createSelector(getSelectedWidgets, (widgets): boolean =>
-    widgets.includes(widgetId),
+    widgetId ? widgets.includes(widgetId) : false,
   );
 };
 
-export const isCurrentWidgetFocused = (widgetId: string) => {
+export const isWidgetFocused = (widgetId: string) => {
   return createSelector(
     getFocusedWidget,
     (widget): boolean => widget === widgetId,
@@ -154,6 +180,7 @@ export const shouldWidgetIgnoreClicksSelector = (widgetId: string) => {
     getAppMode,
     combinedPreviewModeSelector,
     getIsAutoHeightWithLimitsChanging,
+    getAltBlockWidgetSelection,
     (
       focusedWidgetId,
       isTableFilterPaneVisible,
@@ -163,6 +190,7 @@ export const shouldWidgetIgnoreClicksSelector = (widgetId: string) => {
       appMode,
       isPreviewMode,
       isAutoHeightWithLimitsChanging,
+      isWidgetSelectionBlock,
     ) => {
       const isFocused = focusedWidgetId === widgetId;
 
@@ -174,7 +202,8 @@ export const shouldWidgetIgnoreClicksSelector = (widgetId: string) => {
         appMode !== APP_MODE.EDIT ||
         !isFocused ||
         isTableFilterPaneVisible ||
-        isAutoHeightWithLimitsChanging
+        isAutoHeightWithLimitsChanging ||
+        isWidgetSelectionBlock
       );
     },
   );

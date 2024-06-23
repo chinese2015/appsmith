@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +28,7 @@ import java.util.Set;
 @Setter
 @ToString
 @Document
+@FieldNameConstants
 public class User extends BaseDomain implements UserDetails, OidcUser {
 
     @JsonView(Views.Public.class)
@@ -39,6 +42,7 @@ public class User extends BaseDomain implements UserDetails, OidcUser {
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonView(Views.Public.class)
+    @ToString.Exclude
     private String password;
 
     @JsonView(Views.Internal.class)
@@ -58,9 +62,6 @@ public class User extends BaseDomain implements UserDetails, OidcUser {
 
     @JsonView(Views.Public.class)
     private Boolean emailVerified;
-
-    @JsonView(Views.Public.class)
-    private String currentWorkspaceId;
 
     @JsonView(Views.Public.class)
     private Set<String> workspaceIds;
@@ -96,6 +97,9 @@ public class User extends BaseDomain implements UserDetails, OidcUser {
     // e.g. AnonymousUser is created by the system migration during the first time startup.
     @JsonView(Views.Internal.class)
     Boolean isSystemGenerated;
+
+    @JsonView(Views.Internal.class)
+    Instant lastActiveAt;
 
     // TODO: Populate these attributes for a user. Generally required for OAuth2 logins
     @Override
@@ -172,4 +176,6 @@ public class User extends BaseDomain implements UserDetails, OidcUser {
     public String computeFirstName() {
         return (StringUtils.isEmpty(name) ? email : name).split("[\\s@]+", 2)[0];
     }
+
+    public static class Fields extends BaseDomain.Fields {}
 }

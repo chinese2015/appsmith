@@ -9,8 +9,6 @@ import {
 } from "../../../../../support/Objects/ObjectsCore";
 import EditorNavigation, {
   EntityType,
-  PageLeftPane,
-  PagePaneSegment,
 } from "../../../../../support/Pages/EditorNavigation";
 const widgetsPage = require("../../../../../locators/Widgets.json");
 const commonlocators = require("../../../../../locators/commonlocators.json");
@@ -37,15 +35,12 @@ describe(
       cy.get(widgetsPage.tabedataField).should("not.be.empty");
       cy.deleteWidget(widgetsPage.tableWidgetV2);
       cy.wait(2000);
-      cy.ClearSearch();
     });
 
     it("2. Verify empty columnName in data", () => {
       // Drag and drop table widget
       entityExplorer.DragDropWidgetNVerify(draggableWidgets.TABLE, 300, 200);
       table.AddSampleTableData();
-      // close Widget side bar
-      PageLeftPane.switchSegment(PagePaneSegment.Explorer);
       cy.get(widgetsPage.tabedataField).should("not.be.empty");
       cy.get(`${widgetsPage.tabedataField} .CodeMirror`)
         .first()
@@ -73,7 +68,7 @@ describe(
       deployMode.DeployApp(locators._widgetInDeployed(draggableWidgets.TABLE));
       table.WaitUntilTableLoad(0, 0, "v2");
       // Select 1st row
-      cy.isSelectRow(2);
+      table.SelectTableRow(2, 0, true, "v2");
       // Verify Row is selected by showing the message
       agHelper.ValidateToastMessage("Row is selected");
       deployMode.NavigateBacktoEditor();

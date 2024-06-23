@@ -65,7 +65,7 @@ import type BaseWidget from "./BaseWidget";
 import ExternalWidget from "./ExternalWidget";
 import { WDSTableWidget } from "./wds/WDSTableWidget";
 import { WDSCurrencyInputWidget } from "./wds/WDSCurrencyInputWidget";
-import { WDSButtonGroupWidget } from "./wds/WDSButtonGroupWidget";
+import { WDSToolbarButtonsWidget } from "./wds/WDSToolbarButtonsWidget";
 import { WDSPhoneInputWidget } from "./wds/WDSPhoneInputWidget";
 import { WDSCheckboxGroupWidget } from "./wds/WDSCheckboxGroupWidget";
 import { WDSSwitchWidget } from "./wds/WDSSwitchWidget";
@@ -77,8 +77,12 @@ import { SectionWidget } from "./anvil/SectionWidget";
 import { ZoneWidget } from "./anvil/ZoneWidget";
 import { WDSHeadingWidget } from "./wds/WDSHeadingWidget";
 import { WDSParagraphWidget } from "./wds/WDSParagraphWidget";
+import { WDSModalWidget } from "./wds/WDSModalWidget";
+import { WDSStatsWidget } from "./wds/WDSStatsWidget";
+import { WDSKeyValueWidget } from "./wds/WDSKeyValueWidget";
+import { WDSInlineButtonsWidget } from "./wds/WDSInlineButtonsWidget";
 
-const Widgets = [
+const LegacyWidgets = [
   CanvasWidget,
   SkeletonWidget,
   ContainerWidget,
@@ -129,25 +133,9 @@ const Widgets = [
   CodeScannerWidget,
   ListWidgetV2,
   ExternalWidget,
-  WDSButtonWidget,
-  WDSInputWidget,
-  WDSCheckboxWidget,
-  WDSIconButtonWidget,
-  WDSTableWidget,
-  WDSCurrencyInputWidget,
-  WDSButtonGroupWidget,
-  WDSPhoneInputWidget,
-  WDSCheckboxGroupWidget,
-  WDSSwitchWidget,
-  WDSSwitchGroupWidget,
-  WDSRadioGroupWidget,
-  WDSMenuButtonWidget,
-  CustomWidget,
-  SectionWidget,
-  ZoneWidget,
-  WDSParagraphWidget,
-  WDSHeadingWidget,
+];
 
+const DeprecatedWidgets = [
   //Deprecated Widgets
   InputWidget,
   DropdownWidget,
@@ -159,6 +147,38 @@ const Widgets = [
   ProgressWidget,
   CircularProgressWidget,
   ListWidget,
+];
+
+const WDSWidgets = [
+  // WDS Widgets
+  WDSButtonWidget,
+  WDSInputWidget,
+  WDSCheckboxWidget,
+  WDSIconButtonWidget,
+  WDSTableWidget,
+  WDSCurrencyInputWidget,
+  WDSToolbarButtonsWidget,
+  WDSPhoneInputWidget,
+  WDSCheckboxGroupWidget,
+  WDSSwitchWidget,
+  WDSSwitchGroupWidget,
+  WDSRadioGroupWidget,
+  WDSMenuButtonWidget,
+  CustomWidget,
+  SectionWidget,
+  ZoneWidget,
+  WDSParagraphWidget,
+  WDSHeadingWidget,
+  WDSModalWidget,
+  WDSStatsWidget,
+  WDSKeyValueWidget,
+  WDSInlineButtonsWidget,
+];
+
+const Widgets = [
+  ...WDSWidgets,
+  ...DeprecatedWidgets,
+  ...LegacyWidgets,
 ] as (typeof BaseWidget)[];
 
 export default Widgets;

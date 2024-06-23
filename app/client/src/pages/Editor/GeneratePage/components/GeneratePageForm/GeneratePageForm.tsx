@@ -40,7 +40,7 @@ import {
   useSheetColumnHeaders,
   useS3BucketList,
 } from "./hooks";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import type { AppState } from "@appsmith/reducers";
 import type {
   DropdownOptions,
@@ -61,7 +61,7 @@ import {
   integrationEditorURL,
 } from "@appsmith/RouteBuilder";
 import { PluginPackageName } from "entities/Action";
-import { getCurrentAppWorkspace } from "@appsmith/selectors/workspaceSelectors";
+import { getCurrentAppWorkspace } from "@appsmith/selectors/selectedWorkspaceSelectors";
 import { getPluginImages } from "@appsmith/selectors/entitiesSelector";
 import { getAssetUrl } from "@appsmith/utils/airgapHelpers";
 import { DatasourceCreateEntryPoints } from "constants/Datasource";

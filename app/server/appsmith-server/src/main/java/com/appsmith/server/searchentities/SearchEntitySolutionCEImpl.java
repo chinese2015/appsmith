@@ -1,7 +1,6 @@
 package com.appsmith.server.searchentities;
 
 import com.appsmith.server.applications.base.ApplicationService;
-import com.appsmith.server.constants.FieldName;
 import com.appsmith.server.domains.Application;
 import com.appsmith.server.domains.Workspace;
 import com.appsmith.server.dtos.SearchEntityDTO;
@@ -19,6 +18,8 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.appsmith.server.searchentities.helpers.SearchEntityHelper.getPageable;
+import static com.appsmith.server.searchentities.helpers.SearchEntityHelper.getSort;
 import static com.appsmith.server.searchentities.helpers.SearchEntityHelper.shouldSearchEntity;
 
 @RequiredArgsConstructor
@@ -55,15 +56,15 @@ public class SearchEntitySolutionCEImpl implements SearchEntitySolutionCE {
         if (size == 0) {
             return Mono.just(new SearchEntityDTO());
         }
-        Pageable pageable = Pageable.ofSize(size).withPage(page);
-        Sort sort = Sort.by(Sort.Direction.DESC, FieldName.UPDATED_AT);
+        Pageable pageable = getPageable(page, size);
+        Sort sort = getSort();
         searchString = StringUtils.hasLength(searchString) ? searchString.trim() : "";
         // If no entities are specified, search for all entities.
         Mono<List<Workspace>> workspacesMono = Mono.just(new ArrayList<>());
         if (shouldSearchEntity(Workspace.class, entities)) {
             workspacesMono = workspaceService
-                    .filterByEntityFields(
-                            List.of(FieldName.NAME),
+                    .filterByEntityFieldsWithoutPublicAccess(
+                            List.of(Workspace.Fields.name),
                             searchString,
                             pageable,
                             sort,
@@ -74,8 +75,8 @@ public class SearchEntitySolutionCEImpl implements SearchEntitySolutionCE {
         Mono<List<Application>> applicationsMono = Mono.just(new ArrayList<>());
         if (shouldSearchEntity(Application.class, entities)) {
             applicationsMono = applicationService
-                    .filterByEntityFields(
-                            List.of(FieldName.NAME),
+                    .filterByEntityFieldsWithoutPublicAccess(
+                            List.of(Application.Fields.name),
                             searchString,
                             pageable,
                             sort,

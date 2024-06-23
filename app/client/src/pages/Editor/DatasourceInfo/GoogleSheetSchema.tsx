@@ -21,7 +21,7 @@ import {
   DATASOURCE_GENERATE_PAGE_BUTTON,
   GSHEET_SEARCH_PLACEHOLDER,
 } from "@appsmith/constants/messages";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import { getCurrentApplication } from "@appsmith/selectors/applicationSelectors";
 import type { AppState } from "@appsmith/reducers";
 import { getDatasource } from "@appsmith/selectors/entitiesSelector";
@@ -50,6 +50,7 @@ import { setEntityCollapsibleState } from "actions/editorContextActions";
 import ItemLoadingIndicator from "./ItemLoadingIndicator";
 import { useEditorType } from "@appsmith/hooks";
 import history from "utils/history";
+import { getIsGeneratingTemplatePage } from "selectors/pageListSelectors";
 
 interface Props {
   datasourceId: string;
@@ -81,6 +82,8 @@ function GoogleSheetSchema(props: Props) {
     selectedSheet?: string;
     selectedSpreadSheet?: string;
   }>({});
+
+  const isGeneratePageLoading = useSelector(getIsGeneratingTemplatePage);
 
   const handleSearch = (value: string) => {
     setSearchString(value.toLowerCase());
@@ -375,8 +378,8 @@ function GoogleSheetSchema(props: Props) {
     canCreateDatasourceActions &&
     canCreatePages;
 
-  const filteredSpreadsheets = spreadsheetOptions.filter(
-    (option) => (option.label || "").toLowerCase()?.includes(searchString),
+  const filteredSpreadsheets = spreadsheetOptions.filter((option) =>
+    (option.label || "").toLowerCase()?.includes(searchString),
   );
 
   return (
@@ -498,8 +501,9 @@ function GoogleSheetSchema(props: Props) {
         <ButtonContainer>
           <Button
             className="t--datasource-generate-page"
+            isLoading={isGeneratePageLoading}
             key="datasource-generate-page"
-            kind="secondary"
+            kind="primary"
             onClick={onGsheetGeneratePage}
             size="md"
           >

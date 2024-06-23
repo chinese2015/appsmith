@@ -9,7 +9,7 @@ import {
   GENERATE_NEW_PAGE_BUTTON_TEXT,
   createMessage,
 } from "@appsmith/constants/messages";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import history from "utils/history";
 import { generateTemplateFormURL } from "@appsmith/RouteBuilder";
 import {
@@ -27,6 +27,8 @@ import {
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
 import { useFeatureFlag } from "utils/hooks/useFeatureFlag";
 import { ActionParentEntityType } from "@appsmith/entities/Engine/actionHelpers";
+import { isEnabledForPreviewData } from "utils/editorContextUtils";
+import { getPlugin } from "@appsmith/selectors/entitiesSelector";
 
 export interface HeaderActionProps {
   datasource: Datasource | ApiDatasourceForm | undefined;
@@ -55,6 +57,13 @@ export const useHeaderActions = (
   const showGenerateButton = useShowPageGenerationOnHeader(
     datasource as Datasource,
   );
+
+  const plugin = useSelector((state: AppState) =>
+    getPlugin(state, datasource?.pluginId || ""),
+  );
+
+  const isPluginAllowedToPreviewData =
+    !!plugin && isEnabledForPreviewData(datasource as Datasource, plugin);
 
   if (editorType === EditorNames.APPLICATION) {
     const canCreateDatasourceActions = hasCreateDSActionPermissionInApp({
@@ -90,6 +99,7 @@ export const useHeaderActions = (
         datasource={datasource as Datasource}
         disabled={!canCreateDatasourceActions || !isPluginAuthorized}
         eventFrom="datasource-pane"
+        isNewQuerySecondaryButton={!!isPluginAllowedToPreviewData}
         pluginType={pluginType}
       />
     );

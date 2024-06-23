@@ -23,7 +23,7 @@ describe(
     });
 
     it("1. Check camera intialization & modes", () => {
-      entityExplorer.DragNDropWidget(draggableWidgets.CAMERA);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.CAMERA);
       agHelper.AssertAttribute(
         propPane._mode("Image"),
         "data-selected",
@@ -35,10 +35,10 @@ describe(
 
       // Check camera resource is properly released on navigating away
       PageList.AddNewPage();
-      EditorNavigation.SelectEntityByName("Page2", EntityType.Widget);
+      EditorNavigation.SelectEntityByName("Page2", EntityType.Page);
       agHelper.AssertElementAbsence(widgetLocators.cameraVideo);
 
-      EditorNavigation.SelectEntityByName("Page1", EntityType.Widget);
+      EditorNavigation.SelectEntityByName("Page1", EntityType.Page);
       agHelper.AssertElementVisibility(widgetLocators.cameraVideo);
     });
 

@@ -7,9 +7,7 @@ import type { PluginType } from "entities/Action";
 import type { FetchActionsPayload } from "api/ActionAPI";
 import type { ActionParentEntityTypeInterface } from "@appsmith/entities/Engine/actionHelpers";
 
-export type JSCollectionCreateUpdateResponse = ApiResponse & {
-  id: string;
-};
+export type JSCollectionCreateUpdateResponse = ApiResponse<JSCollection>;
 
 export interface MoveJSCollectionRequest {
   collectionId: string;
@@ -23,6 +21,7 @@ export interface UpdateJSObjectNameRequest {
   newName: string;
   oldName: string;
   moduleId?: string;
+  workflowId?: string;
   contextType?: ActionParentEntityTypeInterface;
 }
 
@@ -47,14 +46,16 @@ export interface SetFunctionPropertyPayload {
   value: any;
 }
 export interface RefactorAction {
-  pageId: string;
+  pageId?: string;
   actionId: string;
   newName: string;
   oldName: string;
   collectionName: string;
+  moduleId?: string;
+  contextType?: ActionParentEntityTypeInterface;
 }
 export interface RefactorActionRequest extends RefactorAction {
-  layoutId: string;
+  layoutId?: string;
 }
 
 export interface UpdateCollectionActionNameRequest
@@ -80,6 +81,15 @@ class JSActionAPI extends API {
     jsConfig: Partial<JSCollection>,
   ): Promise<AxiosPromise<JSCollectionCreateUpdateResponse>> {
     return API.post(JSActionAPI.url, jsConfig);
+  }
+
+  static async updateJSCollectionBody(
+    jsCollectionId: string,
+    jsCollectionBody: string,
+  ): Promise<AxiosPromise<JSCollectionCreateUpdateResponse>> {
+    return API.put(`${JSActionAPI.url}/${jsCollectionId}/body`, {
+      body: jsCollectionBody,
+    });
   }
 
   static async updateJSCollection(

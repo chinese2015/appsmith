@@ -37,9 +37,7 @@ export class Table {
   private assertHelper = ObjectsRegistry.AssertHelper;
 
   private _tableWrap = "//div[contains(@class,'tableWrap')]";
-  private _tableHeader =
-    this._tableWrap +
-    "//div[contains(@class,'thead')]//div[contains(@class,'tr')][1]";
+  private _tableHeader = ".thead div[role=columnheader]";
   private _columnHeader = (columnName: string) =>
     this._tableWrap +
     "//div[contains(@class,'thead')]//div[contains(@class,'tr')][1]//div[@role='columnheader']//div[contains(text(),'" +
@@ -258,7 +256,7 @@ export class Table {
   }
 
   public AssertTableHeaderOrder(expectedOrder: string) {
-    cy.xpath(this._tableHeader)
+    cy.get(this._tableHeader)
       .invoke("text")
       .then((x) => {
         expect(x).to.eq(expectedOrder);
@@ -561,7 +559,7 @@ export class Table {
     col: number,
     expectedURL: string,
     tableVersion: "v1" | "v2" = "v1",
-    networkCall = "viewPage",
+    networkCall = "getConsolidatedData",
   ) {
     this.deployMode.StubWindowNAssert(
       this._tableRowColumnData(row, col, tableVersion),
@@ -654,12 +652,11 @@ export class Table {
     toSaveNewValue = false,
     force = false,
   ) {
-    this.agHelper.UpdateInputValue(
+    this.agHelper.ClearNType(
       this._tableRow(rowIndex, colIndex, "v2") +
         " " +
         this._editCellEditorInput,
       newValue.toString(),
-      force,
     );
     toSaveNewValue &&
       this.agHelper.TypeText(this._editCellEditorInput, "{enter}", {

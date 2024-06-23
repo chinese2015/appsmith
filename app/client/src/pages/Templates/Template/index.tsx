@@ -5,7 +5,6 @@ import type { Template as TemplateInterface } from "api/TemplatesApi";
 import { Button, Tooltip, Text } from "design-system";
 import ForkTemplateDialog from "../ForkTemplate";
 import DatasourceChip from "../DatasourceChip";
-import LargeTemplate from "./LargeTemplate";
 import {
   createMessage,
   FORK_THIS_TEMPLATE,
@@ -87,11 +86,7 @@ export interface TemplateProps {
 }
 
 const Template = (props: TemplateProps) => {
-  if (props.size) {
-    return <LargeTemplate {...props} />;
-  } else {
-    return <TemplateLayout {...props} />;
-  }
+  return <TemplateLayout {...props} />;
 };
 
 export interface TemplateLayoutProps extends TemplateProps {
@@ -144,12 +139,19 @@ export function TemplateLayout(props: TemplateLayoutProps) {
         onClick={onClick}
       >
         <ImageWrapper className="image-wrapper">
-          <StyledImage src={screenshotUrls[0]} />
+          <StyledImage alt="Template Thumbnail" src={screenshotUrls[0]} />
         </ImageWrapper>
         <TemplateContent className="template-content">
-          <Text className="title" kind="heading-m" renderAs="h1">
-            {title}
-          </Text>
+          <Tooltip content={title} placement="right">
+            <Text
+              className="title"
+              data-testid="template-content-title"
+              kind="heading-m"
+              renderAs="h1"
+            >
+              {title}
+            </Text>
+          </Tooltip>
           <Text className="categories" kind="heading-s" renderAs="h4">
             {functions.join(" • ")}
           </Text>
@@ -176,7 +178,8 @@ export function TemplateLayout(props: TemplateLayoutProps) {
             >
               <Button
                 className="t--fork-template fork-button"
-                isDisabled={isImportingTemplateToApp}
+                data-testid="t--fork-template-button"
+                isDisabled={isImportingTemplateToApp || !!loadingTemplateId}
                 isIconButton
                 isLoading={
                   props.onForkTemplateClick && loadingTemplateId === id

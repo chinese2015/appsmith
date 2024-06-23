@@ -92,7 +92,7 @@ describe("JS to non-JS mode in Action Selector", { tags: ["@tag.JS"] }, () => {
     EditorNavigation.SelectEntityByName("Button1", EntityType.Widget);
     propPane.EnterJSContext(
       "onClick",
-      `{{Api1.run().then(() => { showAlert('Hello world!', 'info'); storeValue('a', 18); }).catch(() => { showModal('Modal1'); });}}`,
+      `{{Api1.run().then(() => { showAlert('Hello world!', 'info'); storeValue('a', 18); }).catch(() => { showModal(Modal1.name); });}}`,
       true,
       false,
     );
@@ -302,7 +302,7 @@ describe("JS to non-JS mode in Action Selector", { tags: ["@tag.JS"] }, () => {
       0,
     );
 
-    agHelper.GetNClick(propPane._actionCard, 0);
+    agHelper.GetNClick(propPane._actionCard);
     agHelper.AssertElementAbsence(propPane._actionPopupTextLabel, 0);
 
     propPane.EnterJSContext(
@@ -320,7 +320,7 @@ describe("JS to non-JS mode in Action Selector", { tags: ["@tag.JS"] }, () => {
       0,
     );
 
-    agHelper.GetNClick(propPane._actionCard, 0);
+    agHelper.GetNClick(propPane._actionCard);
     agHelper.ValidateCodeEditorContent(propPane._textView, "{{18}}{{26}}");
     agHelper.GetNAssertElementText(
       propPane._actionPopupTextLabel,

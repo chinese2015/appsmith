@@ -8,10 +8,10 @@ import type {
   DataTreeEntity,
 } from "entities/DataTree/dataTreeTypes";
 import type { EvalContext } from "workers/Evaluation/evaluate";
-import type { EvaluationVersion } from "@appsmith/api/ApplicationApi";
+import type { EvaluationVersion } from "constants/EvalConstants";
 import { addFn } from "workers/Evaluation/fns/utils/fnGuard";
 import {
-  entityFns,
+  getEntityFunctions,
   getPlatformFunctions,
 } from "@appsmith/workers/Evaluation/fns";
 import { getEntityForEvalContext } from "workers/Evaluation/getEntityForContext";
@@ -67,7 +67,7 @@ export const addDataTreeToContext = (args: {
 
     if (skipEntityFunctions) continue;
 
-    for (const entityFn of entityFns) {
+    for (const entityFn of getEntityFunctions()) {
       if (!entityFn.qualifier(entity)) continue;
       const func = entityFn.fn(entity, entityName);
       const fullPath = `${entityFn.path || `${entityName}.${entityFn.name}`}`;
@@ -98,15 +98,21 @@ export const addDataTreeToContext = (args: {
       EVAL_CONTEXT,
     );
 
-  // if eval is not trigger based i.e., sync eval then we skip adding entity and platform function to evalContext
   if (!isTriggerBased) return;
+  // if eval is not trigger based i.e., sync eval then we skip adding entity function to evalContext
+  addEntityFunctionsToEvalContext(EVAL_CONTEXT, entityFunctionCollection);
+};
 
+export const addEntityFunctionsToEvalContext = (
+  evalContext: EvalContext,
+  entityFunctionCollection: Record<string, Record<string, Function>>,
+) => {
   for (const [entityName, funcObj] of Object.entries(
     entityFunctionCollection,
   )) {
-    EVAL_CONTEXT[entityName] = Object.assign(
+    evalContext[entityName] = Object.assign(
       {},
-      EVAL_CONTEXT[entityName],
+      evalContext[entityName],
       funcObj,
     );
   }
@@ -166,7 +172,7 @@ export const getAllAsyncFunctions = (
   let allAsyncFunctions: Record<string, true> = {};
   const dataTreeEntries = Object.entries(dataTree);
   for (const [entityName, entity] of dataTreeEntries) {
-    for (const entityFn of entityFns) {
+    for (const entityFn of getEntityFunctions()) {
       if (!entityFn.qualifier(entity)) continue;
       const fullPath = `${entityFn.path || `${entityName}.${entityFn.name}`}`;
       allAsyncFunctions[fullPath] = true;

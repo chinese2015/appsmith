@@ -2,22 +2,23 @@ import React from "react";
 import "@testing-library/jest-dom";
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
-
-import { RadioGroup } from "../";
-import { Radio } from "../../Radio";
+import { RadioGroup } from "@design-system/widgets";
 
 describe("@design-system/widgets/RadioGroup", () => {
-  it("should render the Radio group", () => {
+  const items = [
+    { label: "Value 1", value: "value-1" },
+    { label: "Value 2", value: "value-2" },
+  ];
+
+  it("should render the Radio group", async () => {
     const { container } = render(
-      <RadioGroup label="Radio Group">
-        <Radio value="value-1">Value 1</Radio>
-        <Radio value="value-2">Value 2</Radio>
-      </RadioGroup>,
+      <RadioGroup items={items} label="Radio Group" />,
     );
 
     expect(screen.getByText("Value 1")).toBeInTheDocument();
     expect(screen.getByText("Value 2")).toBeInTheDocument();
 
+    // eslint-disable-next-line testing-library/no-container,testing-library/no-node-access
     const label = container.querySelector("label") as HTMLElement;
     expect(label).toHaveTextContent("Radio Group");
 
@@ -32,33 +33,30 @@ describe("@design-system/widgets/RadioGroup", () => {
     expect(options[0]).not.toBeChecked();
     expect(options[1]).not.toBeChecked();
 
-    userEvent.click(options[0]);
+    await userEvent.click(options[0]);
     expect(options[0]).toBeChecked();
 
-    userEvent.click(options[1]);
+    await userEvent.click(options[1]);
     expect(options[0]).not.toBeChecked();
     expect(options[1]).toBeChecked();
   });
 
   it("should support custom props", () => {
     render(
-      <RadioGroup data-testid="radio-group" label="Radio Group Label">
-        <Radio value="value-1">Value 1</Radio>
-        <Radio value="value-2">Value 2</Radio>
-        <Radio value="value-3">Value 3</Radio>
-      </RadioGroup>,
+      <RadioGroup
+        data-testid="t--radio-group"
+        items={items}
+        label="Radio Group Label"
+      />,
     );
 
-    const radioGroup = screen.getByTestId("radio-group");
+    const radioGroup = screen.getByTestId("t--radio-group");
     expect(radioGroup).toBeInTheDocument();
   });
 
   it("should render checked checkboxes when value is passed", () => {
     render(
-      <RadioGroup label="Radio  Group Label" value="value-1">
-        <Radio value="value-1">Value 1</Radio>
-        <Radio value="value-2">Value 2</Radio>
-      </RadioGroup>,
+      <RadioGroup items={items} label="Radio  Group Label" value="value-1" />,
     );
 
     const options = screen.getAllByRole("radio");
@@ -66,28 +64,24 @@ describe("@design-system/widgets/RadioGroup", () => {
     expect(options[1]).not.toBeChecked();
   });
 
-  it("should be able to fire onChange event", () => {
+  it("should be able to fire onChange event", async () => {
     const onChangeSpy = jest.fn();
 
     render(
-      <RadioGroup label="Radio  Group Label" onChange={onChangeSpy}>
-        <Radio value="value-1">Value 1</Radio>
-        <Radio value="value-2">Value 2</Radio>
-      </RadioGroup>,
+      <RadioGroup
+        items={items}
+        label="Radio  Group Label"
+        onChange={onChangeSpy}
+      />,
     );
 
     const options = screen.getAllByRole("radio");
-    userEvent.click(options[0]);
+    await userEvent.click(options[0]);
     expect(onChangeSpy).toHaveBeenCalled();
   });
 
   it("should be able to render disabled checkboxes", () => {
-    render(
-      <RadioGroup isDisabled label="Radio  Group Label">
-        <Radio value="value-1">Value 1</Radio>
-        <Radio value="value-2">Value 2</Radio>
-      </RadioGroup>,
-    );
+    render(<RadioGroup isDisabled items={items} label="Radio  Group Label" />);
 
     const options = screen.getAllByRole("radio");
     expect(options[0]).toBeDisabled();

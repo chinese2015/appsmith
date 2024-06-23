@@ -1,5 +1,6 @@
 package com.appsmith.server.solutions.ce;
 
+import com.appsmith.external.constants.ActionCreationSourceTypeEnum;
 import com.appsmith.external.constants.AnalyticsEvents;
 import com.appsmith.external.converters.HttpMethodConverter;
 import com.appsmith.external.converters.ISOStringToInstantConverter;
@@ -94,6 +95,7 @@ public class CreateDBTablePageSolutionCEImpl implements CreateDBTablePageSolutio
     private final PagePermission pagePermission;
     private final DatasourceStructureSolution datasourceStructureSolution;
     private final EnvironmentPermission environmentPermission;
+    private final JsonSchemaMigration jsonSchemaMigration;
 
     private static final String FILE_PATH = "CRUD-DB-Table-Template-Application.json";
 
@@ -570,7 +572,7 @@ public class CreateDBTablePageSolutionCEImpl implements CreateDBTablePageSolutio
                 new DefaultResourceLoader().getResource(filePath).getInputStream(), Charset.defaultCharset());
 
         ApplicationJson applicationJson = gson.fromJson(jsonContent, ApplicationJson.class);
-        return JsonSchemaMigration.migrateApplicationToLatestSchema(applicationJson);
+        return (ApplicationJson) jsonSchemaMigration.migrateArtifactToLatestSchema(applicationJson);
     }
 
     /**
@@ -611,6 +613,9 @@ public class CreateDBTablePageSolutionCEImpl implements CreateDBTablePageSolutio
             actionDTO.setPageId(pageId);
             actionDTO.setName(templateAction.getUnpublishedAction().getName());
             actionDTO.setDefaultResources(templateAction.getDefaultResources());
+
+            // Indicates that source of action creation is generate-crud-page
+            actionDTO.setSource(ActionCreationSourceTypeEnum.GENERATE_PAGE);
 
             String actionBody = templateActionConfiguration.getBody();
             actionDTO.setActionConfiguration(templateActionConfiguration);

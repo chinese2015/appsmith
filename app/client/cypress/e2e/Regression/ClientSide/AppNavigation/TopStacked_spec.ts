@@ -13,11 +13,12 @@ import {
 
 describe(
   "Test Top + Stacked navigation style",
-  { tags: ["@tag.IDE"] },
+  { tags: ["@tag.IDE", "@tag.ImportExport"] },
   function () {
     before(() => {
       // Import an application
       homePage.NavigateToHome();
+      agHelper.RefreshPage();
       homePage.ImportApp(
         "appNavigationTestingAppWithLongPageNamesAndTitle.json",
       );

@@ -2,7 +2,6 @@ export const CUSTOM_WIDGET_BUILDER_EVENTS = {
   READY: "READY",
   READY_ACK: "READY_ACK",
   UPDATE_SRCDOC: "UPDATE_SRCDOC",
-  UPDATE_SRCDOC_ACK: "UPDATE_SRCDOC_ACK",
   UPDATE_REFERENCES: "UPDATE_REFERENCES",
   UPDATE_REFERENCES_ACK: "UPDATE_REFERENCES_ACK",
   PAUSE: "PAUSE",
@@ -19,15 +18,16 @@ export const LOCAL_STORAGE_KEYS_SELECTED_LAYOUT =
 
 export const DEFAULT_CONTEXT_VALUE = {
   name: "",
+  widgetId: "",
   srcDoc: {
-    html: "<div>Hello World</div>",
-    js: "function test() {console.log('Hello World');}",
-    css: "div {color: red;}",
+    html: "",
+    js: "",
+    css: "",
   },
   uncompiledSrcDoc: {
-    html: "<div>Hello World</div>",
-    js: "function test() {console.log('Hello World');}",
-    css: "div {color: red;}",
+    html: "",
+    js: "",
+    css: "",
   },
   model: {},
   events: {},
@@ -55,3 +55,9 @@ export const DEFAULT_CONTEXT_VALUE = {
 
 export const CUSTOM_WIDGET_DOC_URL =
   "https://docs.appsmith.com/reference/widgets/custom";
+
+export const CUSTOM_WIDGET_DEFAULT_MODEL_DOC_URL = `${CUSTOM_WIDGET_DOC_URL}#default-model`;
+
+export const CUSTOM_WIDGET_ONREADY_DOC_URL = `${CUSTOM_WIDGET_DOC_URL}#onready`;
+
+export const CUSTOM_WIDGET_HEIGHT_DOC_URL = `${CUSTOM_WIDGET_DOC_URL}#height`;

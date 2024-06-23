@@ -1,7 +1,12 @@
 import { capitalize } from "lodash";
-import { BUTTON_VARIANTS, COLORS } from "@design-system/widgets";
 import { ValidationTypes } from "constants/WidgetValidation";
-import { ICON_NAMES } from "WidgetProvider/constants";
+import {
+  BUTTON_VARIANTS,
+  COLORS,
+  ICONS,
+  objectKeys,
+} from "@design-system/widgets";
+
 import type { MenuButtonWidgetProps } from "../../widget/types";
 
 export const propertyPaneStyleConfig = [
@@ -13,8 +18,8 @@ export const propertyPaneStyleConfig = [
         label: "Button variant",
         controlType: "ICON_TABS",
         helpText: "Sets the variant of the menu button",
-        options: Object.values(BUTTON_VARIANTS).map((variant) => ({
-          label: capitalize(variant),
+        options: objectKeys(BUTTON_VARIANTS).map((variant) => ({
+          label: BUTTON_VARIANTS[variant],
           value: variant,
         })),
         isJSConvertible: true,
@@ -23,8 +28,8 @@ export const propertyPaneStyleConfig = [
         validation: {
           type: ValidationTypes.TEXT,
           params: {
-            allowedValues: Object.values(BUTTON_VARIANTS),
-            default: BUTTON_VARIANTS.filled,
+            allowedValues: objectKeys(BUTTON_VARIANTS),
+            default: objectKeys(BUTTON_VARIANTS)[0],
           },
         },
       },
@@ -58,7 +63,7 @@ export const propertyPaneStyleConfig = [
         propertyName: "triggerButtonIconName",
         label: "Icon",
         helpText: "Sets the icon to be used for the menu button",
-        controlType: "ICON_SELECT",
+        controlType: "ICON_SELECT_V2",
         isJSConvertible: true,
         isBindProperty: true,
         isTriggerProperty: false,
@@ -82,7 +87,7 @@ export const propertyPaneStyleConfig = [
         validation: {
           type: ValidationTypes.TEXT,
           params: {
-            allowedValues: ICON_NAMES,
+            allowedValues: Object.keys(ICONS) as unknown as string[],
           },
         },
       },

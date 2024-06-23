@@ -1,11 +1,12 @@
 package com.appsmith.server.domains;
 
 import com.appsmith.external.models.BaseDomain;
+import com.appsmith.external.views.Git;
 import com.appsmith.external.views.Views;
+import com.appsmith.server.constants.ArtifactType;
 import com.appsmith.server.dtos.CustomJSLibContextDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.querydsl.core.annotations.QueryEntity;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,8 +14,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -24,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.appsmith.external.helpers.StringUtils.dotted;
 import static com.appsmith.server.constants.ResourceModes.EDIT;
 import static com.appsmith.server.constants.ResourceModes.VIEW;
 import static com.appsmith.server.helpers.DateUtils.ISO_FORMATTER;
@@ -32,9 +36,9 @@ import static com.appsmith.server.helpers.DateUtils.ISO_FORMATTER;
 @Setter
 @ToString
 @NoArgsConstructor
-@QueryEntity
 @Document
-public class Application extends BaseDomain {
+@FieldNameConstants
+public class Application extends BaseDomain implements Artifact {
 
     @NotNull @JsonView(Views.Public.class)
     String name;
@@ -48,7 +52,7 @@ public class Application extends BaseDomain {
     @JsonView(Views.Public.class)
     Boolean isPublic = false;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     List<ApplicationPage> pages;
 
     @JsonView(Views.Internal.class)
@@ -59,7 +63,7 @@ public class Application extends BaseDomain {
     Boolean viewMode = false;
 
     @Transient
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     boolean appIsExample = false;
 
     @Transient
@@ -69,22 +73,22 @@ public class Application extends BaseDomain {
     @JsonView(Views.Internal.class)
     String clonedFromApplicationId;
 
-    @JsonView(Views.Internal.class)
+    @JsonView({Views.Internal.class, Git.class})
     ApplicationDetail unpublishedApplicationDetail;
 
     @JsonView(Views.Internal.class)
     ApplicationDetail publishedApplicationDetail;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     String color;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     String icon;
 
     @JsonView(Views.Public.class)
     private String slug;
 
-    @JsonView(Views.Internal.class)
+    @JsonView({Views.Internal.class, Git.class})
     AppLayout unpublishedAppLayout;
 
     @JsonView(Views.Internal.class)
@@ -97,14 +101,14 @@ public class Application extends BaseDomain {
     Set<CustomJSLibContextDTO> publishedCustomJSLibs;
 
     @JsonView(Views.Public.class)
-    GitApplicationMetadata gitApplicationMetadata;
+    GitArtifactMetadata gitApplicationMetadata;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(Views.Public.class)
     Instant lastDeployedAt; // when this application was last deployed
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     Integer evaluationVersion;
 
     /**
@@ -114,7 +118,7 @@ public class Application extends BaseDomain {
      * so that they can update their application.
      * Once updated, we should set applicationVersion to latest version as well.
      */
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     Integer applicationVersion;
 
     /**
@@ -125,9 +129,10 @@ public class Application extends BaseDomain {
     @JsonView(Views.Internal.class)
     Instant lastEditedAt;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     EmbedSetting embedSetting;
 
+    @JsonView({Views.Public.class, Git.class})
     Boolean collapseInvisibleWidgets;
 
     /**
@@ -169,10 +174,10 @@ public class Application extends BaseDomain {
 
     // To convey current schema version for client and server. This will be used to check if we run the migration
     // between 2 commits if the application is connected to git
-    @JsonView(Views.Internal.class)
+    @JsonView({Views.Internal.class, Git.class})
     Integer clientSchemaVersion;
 
-    @JsonView(Views.Internal.class)
+    @JsonView({Views.Internal.class, Git.class})
     Integer serverSchemaVersion;
 
     @JsonView(Views.Internal.class)
@@ -269,6 +274,47 @@ public class Application extends BaseDomain {
     }
 
     @Override
+    public String getBaseId() {
+        if (this.getGitArtifactMetadata() != null
+                && StringUtils.hasLength(this.getGitArtifactMetadata().getDefaultArtifactId())) {
+            return this.getGitArtifactMetadata().getDefaultArtifactId();
+        }
+        return Artifact.super.getBaseId();
+    }
+
+    @JsonView(Views.Internal.class)
+    @Override
+    public GitArtifactMetadata getGitArtifactMetadata() {
+        return this.gitApplicationMetadata;
+    }
+
+    @JsonView(Views.Internal.class)
+    @Override
+    public void setGitArtifactMetadata(GitArtifactMetadata gitArtifactMetadata) {
+        this.gitApplicationMetadata = gitArtifactMetadata;
+    }
+
+    @Override
+    public String getUnpublishedThemeId() {
+        return this.getEditModeThemeId();
+    }
+
+    @Override
+    public void setUnpublishedThemeId(String themeId) {
+        this.setEditModeThemeId(themeId);
+    }
+
+    @Override
+    public String getPublishedThemeId() {
+        return this.getPublishedModeThemeId();
+    }
+
+    @Override
+    public void setPublishedThemeId(String themeId) {
+        this.setPublishedModeThemeId(themeId);
+    }
+
+    @Override
     public void sanitiseToExportDBObject() {
         this.setWorkspaceId(null);
         this.setModifiedBy(null);
@@ -316,11 +362,17 @@ public class Application extends BaseDomain {
         }
     }
 
+    @Override
+    @JsonView({Views.Internal.class})
+    public ArtifactType getArtifactType() {
+        return ArtifactType.APPLICATION;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AppLayout implements Serializable {
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         Type type;
 
         public enum Type {
@@ -338,13 +390,13 @@ public class Application extends BaseDomain {
     @Data
     public static class EmbedSetting {
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String height;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String width;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private Boolean showNavigationBar;
     }
 
@@ -353,31 +405,31 @@ public class Application extends BaseDomain {
      */
     @Data
     public static class NavigationSetting {
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private Boolean showNavbar;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String orientation;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String navStyle;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String position;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String itemStyle;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String colorStyle;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String logoAssetId;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String logoConfiguration;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private Boolean showSignIn;
     }
 
@@ -386,12 +438,13 @@ public class Application extends BaseDomain {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class AppPositioning {
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         Type type;
 
-        public AppPositioning(Type type) {
-            this.type = type;
+        public AppPositioning(String type) {
+            setType(Type.valueOf(type));
         }
 
         public enum Type {
@@ -405,23 +458,26 @@ public class Application extends BaseDomain {
     @NoArgsConstructor
     public static class ThemeSetting {
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String accentColor;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String borderRadius;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private float sizing = 1;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private float density = 1;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         private String fontFamily;
 
-        @JsonView(Views.Public.class)
+        @JsonView({Views.Public.class, Git.class})
         Type colorMode;
+
+        @JsonView({Views.Public.class, Git.class})
+        IconStyle iconStyle;
 
         public ThemeSetting(Type colorMode) {
             this.colorMode = colorMode;
@@ -431,5 +487,28 @@ public class Application extends BaseDomain {
             LIGHT,
             DARK
         }
+
+        public enum IconStyle {
+            OUTLINED,
+            FILLED
+        }
+    }
+
+    public static class Fields extends BaseDomain.Fields {
+        public static final String gitApplicationMetadata_gitAuth =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.gitAuth);
+        public static final String gitApplicationMetadata_defaultApplicationId =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.defaultApplicationId);
+
+        public static final String gitApplicationMetadata_defaultArtifactId =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.defaultArtifactId);
+        public static final String gitApplicationMetadata_isAutoDeploymentEnabled =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.isAutoDeploymentEnabled);
+        public static final String gitApplicationMetadata_branchName =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.branchName);
+        public static final String gitApplicationMetadata_isRepoPrivate =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.isRepoPrivate);
+        public static final String gitApplicationMetadata_isProtectedBranch =
+                dotted(gitApplicationMetadata, GitArtifactMetadata.Fields.isProtectedBranch);
     }
 }

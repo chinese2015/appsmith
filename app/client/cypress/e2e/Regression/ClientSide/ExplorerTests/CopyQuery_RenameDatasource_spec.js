@@ -1,6 +1,7 @@
 import EditorNavigation, {
   EntityType,
   PageLeftPane,
+  PagePaneSegment,
 } from "../../../../support/Pages/EditorNavigation";
 
 const apiwidget = require("../../../../locators/apiWidgetslocator.json");
@@ -18,14 +19,8 @@ describe(
   { tags: ["@tag.IDE"] },
   function () {
     beforeEach(() => {
-      cy.startRoutesForDatasource();
+      dataSources.StartDataSourceRoutes();
     });
-
-    // afterEach(function() {
-    //   if (this.currentTest.state === "failed") {
-    //     Cypress.runner.stop();
-    //   }
-    // });
 
     it("1. Create a query with dataSource in explorer, Create new Page", function () {
       cy.Createpage(pageid);
@@ -49,7 +44,7 @@ describe(
       cy.get(".t--action-name-edit-field").click({ force: true });
       cy.get("@saveDatasource").then((httpResponse) => {
         datasourceName = httpResponse.response.body.data.name;
-        PageLeftPane.expandCollapseItem("Queries/JS");
+        PageLeftPane.switchSegment(PagePaneSegment.Queries);
         entityExplorer.ActionContextMenuByEntityName({
           entityNameinLeftSidebar: "Query1",
           action: "Show bindings",

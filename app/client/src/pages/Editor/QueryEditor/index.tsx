@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RouteComponentProps } from "react-router";
 
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import Editor from "./Editor";
 import history from "utils/history";
 import MoreActionsMenu from "../Explorer/Actions/MoreActionsMenu";
@@ -12,23 +12,36 @@ import {
   getCurrentApplicationId,
   getCurrentPageId,
   getIsEditorInitialized,
+  getPagePermissions,
 } from "selectors/editorSelectors";
 import { changeQuery } from "actions/queryPaneActions";
 import { DatasourceCreateEntryPoints } from "constants/Datasource";
 import {
   getAction,
+  getIsActionConverting,
+  getPluginImages,
   getPluginSettingConfigs,
 } from "@appsmith/selectors/entitiesSelector";
 import { integrationEditorURL } from "@appsmith/RouteBuilder";
 import { QueryEditorContextProvider } from "./QueryEditorContext";
 import type { QueryEditorRouteParams } from "constants/routes";
 import {
+  getHasCreateActionPermission,
   getHasDeleteActionPermission,
   getHasManageActionPermission,
 } from "@appsmith/utils/BusinessFeatures/permissionPageHelpers";
 import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
 import { useFeatureFlag } from "utils/hooks/useFeatureFlag";
-import CloseEditor from "components/editorComponents/CloseEditor";
+import Disabler from "pages/common/Disabler";
+import ConvertToModuleInstanceCTA from "@appsmith/pages/Editor/EntityEditor/ConvertToModuleInstanceCTA";
+import { MODULE_TYPE } from "@appsmith/constants/ModuleConstants";
+import ConvertEntityNotification from "@appsmith/pages/common/ConvertEntityNotification";
+import { PluginType } from "entities/Action";
+import { Icon } from "design-system";
+import { resolveIcon } from "../utils";
+import { ENTITY_ICON_SIZE, EntityIcon } from "../Explorer/ExplorerIcons";
+import { getIDEViewMode } from "selectors/ideSelectors";
+import { EditorViewMode } from "@appsmith/entities/IDE/constants";
 
 type QueryEditorProps = RouteComponentProps<QueryEditorRouteParams>;
 
@@ -45,6 +58,24 @@ function QueryEditor(props: QueryEditorProps) {
   const settingsConfig = useSelector((state) =>
     getPluginSettingConfigs(state, pluginId),
   );
+  const pagePermissions = useSelector(getPagePermissions);
+  const isConverting = useSelector((state) =>
+    getIsActionConverting(state, actionId || ""),
+  );
+  const pluginImages = useSelector(getPluginImages);
+  const editorMode = useSelector(getIDEViewMode);
+  const icon = resolveIcon({
+    iconLocation: pluginImages[pluginId] || "",
+    pluginType: action?.pluginType || "",
+    moduleType: action?.actionConfiguration?.body?.moduleType,
+  }) || (
+    <EntityIcon
+      height={`${ENTITY_ICON_SIZE}px`}
+      width={`${ENTITY_ICON_SIZE}px`}
+    >
+      <Icon name="module" />
+    </EntityIcon>
+  );
 
   const isDeletePermitted = getHasDeleteActionPermission(
     isFeatureEnabled,
@@ -56,19 +87,49 @@ function QueryEditor(props: QueryEditorProps) {
     action?.userPermissions,
   );
 
-  const moreActionsMenu = useMemo(
-    () => (
-      <MoreActionsMenu
-        className="t--more-action-menu"
-        id={action ? action.id : ""}
-        isChangePermitted={isChangePermitted}
-        isDeletePermitted={isDeletePermitted}
-        name={action ? action.name : ""}
-        pageId={pageId}
-      />
-    ),
-    [action?.id, action?.name, isChangePermitted, isDeletePermitted, pageId],
+  const isCreatePermitted = getHasCreateActionPermission(
+    isFeatureEnabled,
+    pagePermissions,
   );
+
+  const moreActionsMenu = useMemo(() => {
+    const convertToModuleProps = {
+      canCreateModuleInstance: isCreatePermitted,
+      canDeleteEntity: isDeletePermitted,
+      entityId: action?.id || "",
+      moduleType: MODULE_TYPE.QUERY,
+    };
+    return (
+      <>
+        <MoreActionsMenu
+          className="t--more-action-menu"
+          id={action?.id || ""}
+          isChangePermitted={isChangePermitted}
+          isDeletePermitted={isDeletePermitted}
+          name={action?.name || ""}
+          pageId={pageId}
+          prefixAdditionalMenus={
+            editorMode === EditorViewMode.SplitScreen && (
+              <ConvertToModuleInstanceCTA {...convertToModuleProps} />
+            )
+          }
+        />
+        {action?.pluginType !== PluginType.INTERNAL &&
+          editorMode !== EditorViewMode.SplitScreen && (
+            // Need to remove this check once workflow query is supported in module
+            <ConvertToModuleInstanceCTA {...convertToModuleProps} />
+          )}
+      </>
+    );
+  }, [
+    action?.id,
+    action?.name,
+    isChangePermitted,
+    isDeletePermitted,
+    pageId,
+    isCreatePermitted,
+    editorMode,
+  ]);
 
   const actionRightPaneBackLink = useMemo(() => {
     return <BackToCanvas pageId={pageId} />;
@@ -113,26 +174,34 @@ function QueryEditor(props: QueryEditorProps) {
     [pageId, history, integrationEditorURL],
   );
 
-  const isPagesPaneEnabled = useFeatureFlag(
-    FEATURE_FLAG.release_show_new_sidebar_pages_pane_enabled,
-  );
+  const notification = useMemo(() => {
+    if (!isConverting) return null;
 
-  const closeEditorLink = useMemo(() => <CloseEditor />, []);
+    return (
+      <ConvertEntityNotification
+        icon={icon}
+        name={action?.name || ""}
+        withPadding
+      />
+    );
+  }, [action?.name, isConverting]);
 
   return (
     <QueryEditorContextProvider
       actionRightPaneBackLink={actionRightPaneBackLink}
       changeQueryPage={changeQueryPage}
-      closeEditorLink={isPagesPaneEnabled ? null : closeEditorLink}
       moreActionsMenu={moreActionsMenu}
+      notification={notification}
       onCreateDatasourceClick={onCreateDatasourceClick}
       onEntityNotFoundBackClick={onEntityNotFoundBackClick}
     >
-      <Editor
-        {...props}
-        isEditorInitialized={isEditorInitialized}
-        settingsConfig={settingsConfig}
-      />
+      <Disabler isDisabled={isConverting}>
+        <Editor
+          {...props}
+          isEditorInitialized={isEditorInitialized}
+          settingsConfig={settingsConfig}
+        />
+      </Disabler>
     </QueryEditorContextProvider>
   );
 }

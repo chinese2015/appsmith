@@ -30,6 +30,7 @@ export interface PropertyPaneSectionConfig {
   generateDynamicProperties?: (
     widget: WidgetProps,
   ) => PropertyPaneControlConfig[];
+  expandedByDefault?: boolean;
 }
 
 export interface PanelConfig {
@@ -112,6 +113,9 @@ export interface PropertyPaneControlConfig {
    * will depend on the control type and its individual requirements.
    */
   controlConfig?: Record<string, unknown>;
+  defaultValue?: unknown;
+  /** used to mark a property as reusable so that it can be reused in next dropping widget */
+  isReusable?: boolean;
 }
 
 interface ValidationConfigParams {

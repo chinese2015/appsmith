@@ -23,17 +23,12 @@ export default {
     ".t--apiFormPaginationType label:contains('Paginate with response URL') input",
   apiTab: ".react-tabs__tab-list li",
   bodyType: ".t--apiFormPostBodyType",
-  bodyTypeSelected:
-    '[data-testid="t--api-body-tab-switch"] .ads-v2-segmented-control__segments-container-segment[data-selected="true"]',
+  bodyTypeSelected: '[data-testid="t--api-body-tab-switch"] .rc-select-selection-item',
   bodyTab: "Body",
-  jsonBodyTab:
-    ".ads-v2-segmented-control__segments-container-segment[data-value='application/json']",
   headersTab: "Header",
   jsonResponseTab: "[data-value='JSON']",
   tableResponseTab: "[data-value='TABLE']",
   rawResponseTab: "[data-value='RAW']",
-  datasourcesRightPane: "button[role='tab'] span:contains('Datasources')",
-  connectionsRightPane: "button[role='tab'] span:contains('Connections')",
   httpDropDownOptions: ".rc-select-item",
   codeEditorWrapper: ".t--code-editor-wrapper",
   apiSearchHint: ".datasource-hint",

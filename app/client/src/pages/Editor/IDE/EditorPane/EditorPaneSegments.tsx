@@ -2,33 +2,36 @@ import React from "react";
 import { Flex } from "design-system";
 import { Switch, useRouteMatch } from "react-router";
 import { SentryRoute } from "@appsmith/AppRouter";
-import { QueriesSection } from "./QueriesSection";
+import QueriesSegment from "./Query";
+import WidgetsSegment from "./UI";
+import JSSegment from "./JS";
+import SegmentedHeader from "./components/SegmentedHeader";
+import EditorTabs from "../EditorTabs/SplitScreenTabs";
 import {
-  API_EDITOR_ID_PATH,
+  jsSegmentRoutes,
+  querySegmentRoutes,
+  widgetSegmentRoutes,
+} from "@appsmith/pages/Editor/IDE/EditorPane/constants";
+import {
   BUILDER_CUSTOM_PATH,
   BUILDER_PATH,
   BUILDER_PATH_DEPRECATED,
-  CURL_IMPORT_PAGE_PATH,
-  JS_COLLECTION_EDITOR_PATH,
-  JS_COLLECTION_ID_PATH,
-  QUERIES_EDITOR_BASE_PATH,
-  WIDGETS_EDITOR_BASE_PATH,
-} from "constants/routes";
-import { SAAS_EDITOR_API_ID_PATH } from "../../SaaSEditor/constants";
-import { JSSection } from "./JS_Section";
-import { WidgetsSection } from "./WidgetsSection";
-import EntityProperties from "pages/Editor/Explorer/Entity/EntityProperties";
-import SegmentedHeader from "./components/SegmentedHeader";
+} from "@appsmith/constants/routes/appRoutes";
 
 const EditorPaneSegments = () => {
   const { path } = useRouteMatch();
 
   return (
-    <Flex flexDirection="column" gap="spacing-2" overflow="hidden">
+    <Flex
+      flexDirection="column"
+      gap="spacing-2"
+      height="100%"
+      overflow="hidden"
+    >
       <SegmentedHeader />
-      <EntityProperties />
+      <EditorTabs />
       <Flex
-        className="ide-pages-pane__content"
+        className="ide-editor-left-pane__content"
         flexDirection="column"
         height="100%"
         overflow="hidden"
@@ -36,28 +39,20 @@ const EditorPaneSegments = () => {
       >
         <Switch>
           <SentryRoute
-            component={QueriesSection}
-            path={[
-              `${path}${CURL_IMPORT_PAGE_PATH}`,
-              `${path}${API_EDITOR_ID_PATH}`,
-              `${path}${SAAS_EDITOR_API_ID_PATH}`,
-              `${path}${QUERIES_EDITOR_BASE_PATH}`,
-            ]}
+            component={QueriesSegment}
+            path={querySegmentRoutes.map((route) => `${path}${route}`)}
           />
           <SentryRoute
-            component={JSSection}
-            path={[
-              `${path}${JS_COLLECTION_EDITOR_PATH}`,
-              `${path}${JS_COLLECTION_ID_PATH}`,
-            ]}
+            component={JSSegment}
+            path={jsSegmentRoutes.map((route) => `${path}${route}`)}
           />
           <SentryRoute
-            component={WidgetsSection}
+            component={WidgetsSegment}
             path={[
-              BUILDER_PATH_DEPRECATED,
               BUILDER_PATH,
               BUILDER_CUSTOM_PATH,
-              `${path}${WIDGETS_EDITOR_BASE_PATH}`,
+              BUILDER_PATH_DEPRECATED,
+              ...widgetSegmentRoutes.map((route) => `${path}${route}`),
             ]}
           />
         </Switch>

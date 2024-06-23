@@ -53,6 +53,7 @@ public class DatabricksPlugin extends BasePlugin {
     private static final int JDBC_URL_INDEX = 5;
     private static final long DEFAULT_PORT = 443L;
     private static final int HTTP_PATH_INDEX = 1;
+    private static final int USER_AGENT_TAG = 4;
     private static final String FORM_PROPERTIES_CONFIGURATION = "FORM_PROPERTIES_CONFIGURATION";
     private static final String JDBC_URL_CONFIGURATION = "JDBC_URL_CONFIGURATION";
 
@@ -107,11 +108,24 @@ public class DatabricksPlugin extends BasePlugin {
                                     "Error checking validity of Databricks connection : " + error.getMessage());
                         }
 
+                        ActionExecutionResult result = new ActionExecutionResult();
+                        result.setIsExecutionSuccess(true);
+
                         try {
 
                             // We can proceed since the connection is valid.
                             Statement statement = connection.createStatement();
-                            ResultSet resultSet = statement.executeQuery(query);
+                            boolean hasResultSet = statement.execute(query);
+
+                            if (!hasResultSet) {
+                                // This must be an update/delete/insert kind of query which did not return any results.
+                                // Lets set sample response and return back.
+                                Map<String, Object> successResponse = Map.of("success", true);
+                                result.setBody(objectMapper.valueToTree(successResponse));
+                                return Mono.just(result);
+                            }
+
+                            ResultSet resultSet = statement.getResultSet();
 
                             ResultSetMetaData metaData = resultSet.getMetaData();
                             int colCount = metaData.getColumnCount();
@@ -155,9 +169,7 @@ public class DatabricksPlugin extends BasePlugin {
                                     "SQLSTATE: " + sqlState));
                         }
 
-                        ActionExecutionResult result = new ActionExecutionResult();
                         result.setBody(objectMapper.valueToTree(rowsList));
-                        result.setIsExecutionSuccess(true);
                         return Mono.just(result);
                     })
                     .flatMap(obj -> obj)
@@ -214,6 +226,17 @@ public class DatabricksPlugin extends BasePlugin {
 
                 // Always enable SSL for Databricks connections.
                 p.put("SSL", "1");
+
+                // Add user agent tag. Default to Appsmith if not provided.
+                String userAgentTag = (String) datasourceConfiguration
+                        .getProperties()
+                        .get(USER_AGENT_TAG)
+                        .getValue();
+                if (!StringUtils.hasText(userAgentTag)) {
+                    userAgentTag = "Appsmith";
+                }
+
+                p.put("UserAgentEntry", userAgentTag);
             } else {
                 url = "";
             }

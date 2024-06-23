@@ -10,17 +10,13 @@ import com.appsmith.server.actioncollections.base.ActionCollectionService;
 import com.appsmith.server.actioncollections.base.ActionCollectionServiceImpl;
 import com.appsmith.server.applications.base.ApplicationService;
 import com.appsmith.server.constants.FieldName;
+import com.appsmith.server.defaultresources.DefaultResourcesService;
 import com.appsmith.server.domains.ActionCollection;
-import com.appsmith.server.domains.Layout;
 import com.appsmith.server.domains.NewAction;
 import com.appsmith.server.domains.NewPage;
 import com.appsmith.server.dtos.ActionCollectionDTO;
-import com.appsmith.server.dtos.ActionCollectionMoveDTO;
-import com.appsmith.server.dtos.LayoutDTO;
-import com.appsmith.server.dtos.PageDTO;
 import com.appsmith.server.exceptions.AppsmithError;
 import com.appsmith.server.exceptions.AppsmithException;
-import com.appsmith.server.helpers.ObjectMapperUtils;
 import com.appsmith.server.helpers.ResponseUtils;
 import com.appsmith.server.layouts.UpdateLayoutService;
 import com.appsmith.server.newactions.base.NewActionService;
@@ -35,34 +31,24 @@ import com.appsmith.server.solutions.PagePermission;
 import com.appsmith.server.solutions.PagePermissionImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.result.UpdateResult;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
-import org.bson.BsonObjectId;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.test.StepVerifier;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -107,16 +93,7 @@ public class ActionCollectionServiceImplTest {
     ActionPermission actionPermission;
 
     @MockBean
-    private Scheduler scheduler;
-
-    @MockBean
     private Validator validator;
-
-    @MockBean
-    private MongoConverter mongoConverter;
-
-    @MockBean
-    private ReactiveMongoTemplate reactiveMongoTemplate;
 
     @MockBean
     private AnalyticsService analyticsService;
@@ -124,16 +101,25 @@ public class ActionCollectionServiceImplTest {
     @MockBean
     private PolicyGenerator policyGenerator;
 
+    @MockBean
+    private DefaultResourcesService<ActionCollection> actionCollectionDefaultResourcesService;
+
+    @MockBean
+    private DefaultResourcesService<ActionCollectionDTO> actionCollectionDtoDefaultResourcesService;
+
+    @MockBean
+    private DefaultResourcesService<NewAction> newActionDefaultResourcesService;
+
+    @MockBean
+    private DefaultResourcesService<ActionDTO> actionDTODefaultResourcesService;
+
     @BeforeEach
     public void setUp() {
         applicationPermission = new ApplicationPermissionImpl();
         pagePermission = new PagePermissionImpl();
         actionPermission = new ActionPermissionImpl();
         actionCollectionService = new ActionCollectionServiceImpl(
-                scheduler,
                 validator,
-                mongoConverter,
-                reactiveMongoTemplate,
                 actionCollectionRepository,
                 analyticsService,
                 newActionService,
@@ -141,7 +127,11 @@ public class ActionCollectionServiceImplTest {
                 applicationService,
                 responseUtils,
                 applicationPermission,
-                actionPermission);
+                actionPermission,
+                actionCollectionDefaultResourcesService,
+                actionCollectionDtoDefaultResourcesService,
+                newActionDefaultResourcesService,
+                actionDTODefaultResourcesService);
 
         layoutCollectionService = new LayoutCollectionServiceImpl(
                 newPageService,
@@ -475,6 +465,10 @@ public class ActionCollectionServiceImplTest {
         Mockito.when(newPageService.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.just(newPage));
 
+        Mockito.when(newActionService.findByCollectionIdAndViewMode(
+                        Mockito.anyString(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(Flux.empty());
+
         final Mono<ActionCollectionDTO> actionCollectionDTOMono =
                 layoutCollectionService.updateUnpublishedActionCollection("testId", actionCollectionDTO, null);
 
@@ -488,114 +482,8 @@ public class ActionCollectionServiceImplTest {
     }
 
     @Test
-    public void testUpdateUnpublishedActionCollection_withModifiedCollection_returnsValidCollection()
-            throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectMapperUtils objectMapperUtils = new ObjectMapperUtils(objectMapper);
-
-        final JsonNode jsonNode = objectMapperUtils.readFromFile(mockObjects, Views.Public.class, JsonNode.class);
-
-        String actionCollectionString =
-                objectMapperUtils.writeAsString(jsonNode.get("actionCollectionWithAction"), Views.Public.class);
-        final ActionCollection actionCollection =
-                objectMapperUtils.readFromString(actionCollectionString, Views.Public.class, ActionCollection.class);
-
-        String actionCollectionDTOWithModifiedActionsString = objectMapperUtils.writeAsString(
-                jsonNode.get("actionCollectionDTOWithModifiedActions"), Views.Public.class);
-        final ActionCollectionDTO modifiedActionCollectionDTO = objectMapperUtils.readFromString(
-                actionCollectionDTOWithModifiedActionsString, Views.Public.class, ActionCollectionDTO.class);
-
-        String actionCollectionAfterModifiedActionsString = objectMapperUtils.writeAsString(
-                jsonNode.get("actionCollectionAfterModifiedActions"), Views.Public.class);
-        final ActionCollection modifiedActionCollection = objectMapperUtils.readFromString(
-                actionCollectionAfterModifiedActionsString, Views.Public.class, ActionCollection.class);
-
-        final ActionCollectionDTO unpublishedCollection = modifiedActionCollection.getUnpublishedCollection();
-        unpublishedCollection.setDefaultToBranchedActionIdsMap(
-                Map.of("defaultTestActionId1", "testActionId1", "defaultTestActionId3", "testActionId3"));
-        unpublishedCollection.setDefaultToBranchedArchivedActionIdsMap(Map.of("defaultTestActionId2", "testActionId2"));
-        actionCollection.setDefaultResources(setDefaultResources(actionCollection));
-        modifiedActionCollection.setDefaultResources(actionCollection.getDefaultResources());
-        modifiedActionCollectionDTO.setDefaultResources(setDefaultResources(modifiedActionCollectionDTO));
-        unpublishedCollection.setDefaultResources(setDefaultResources(unpublishedCollection));
-
-        final Instant archivedAfter = Instant.now();
-
-        Map<String, ActionDTO> updatedActions = new HashMap<>();
-        Mockito.when(layoutActionService.updateSingleAction(Mockito.any(), Mockito.any()))
-                .thenAnswer(invocation -> {
-                    final ActionDTO argument = (ActionDTO) invocation.getArguments()[1];
-                    DefaultResources defaultResources = new DefaultResources();
-                    defaultResources.setActionId((String) invocation.getArguments()[0]);
-                    argument.setDefaultResources(defaultResources);
-                    argument.setId(defaultResources.getActionId());
-                    updatedActions.put(argument.getId(), argument);
-                    return Mono.just(argument);
-                });
-
-        Mockito.when(newActionService.deleteUnpublishedAction(Mockito.any())).thenAnswer(invocation -> {
-            final ActionDTO argument = (ActionDTO) invocation.getArguments()[1];
-            return Mono.just(argument);
-        });
-
-        Mockito.when(reactiveMongoTemplate.updateFirst(Mockito.any(), Mockito.any(), Mockito.any(Class.class)))
-                .thenReturn(Mono.just((Mockito.mock(UpdateResult.class))));
-
-        Mockito.when(actionCollectionRepository.findById(Mockito.anyString(), Mockito.<AclPermission>any()))
-                .thenReturn(Mono.just(actionCollection));
-
-        Mockito.when(actionCollectionRepository.findById(Mockito.anyString()))
-                .thenReturn(Mono.just(modifiedActionCollection));
-
-        Mockito.when(newActionService.findActionDTObyIdAndViewMode(Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenAnswer(invocation -> {
-                    String id = (String) invocation.getArguments()[0];
-                    return Mono.just(updatedActions.get(id));
-                });
-
-        Mockito.when(responseUtils.updateCollectionDTOWithDefaultResources(Mockito.any()))
-                .thenReturn(modifiedActionCollectionDTO);
-
-        final NewPage newPage = objectMapper.convertValue(jsonNode.get("newPage"), NewPage.class);
-
-        Mockito.when(newPageService.findByBranchNameAndDefaultPageId(Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenReturn(Mono.just(newPage));
-
-        Mockito.when(newPageService.findById(Mockito.any(), Mockito.<AclPermission>any()))
-                .thenReturn(Mono.just(newPage));
-
-        Mockito.when(actionCollectionRepository.setUserPermissionsInObject(Mockito.any()))
-                .thenReturn(Mono.just(modifiedActionCollection));
-
-        Mockito.when(updateLayoutService.updatePageLayoutsByPageId(Mockito.anyString()))
-                .thenAnswer(invocationOnMock -> {
-                    return Mono.just(actionCollection.getUnpublishedCollection().getPageId());
-                });
-
-        final Mono<ActionCollectionDTO> actionCollectionDTOMono =
-                layoutCollectionService.updateUnpublishedActionCollection(
-                        "testCollectionId", modifiedActionCollectionDTO, null);
-
-        StepVerifier.create(actionCollectionDTOMono)
-                .assertNext(actionCollectionDTO1 -> {
-                    assertEquals(2, actionCollectionDTO1.getActions().size());
-                    assertEquals(1, actionCollectionDTO1.getArchivedActions().size());
-                    assertTrue(actionCollectionDTO1.getActions().stream()
-                            .map(ActionDTO::getId)
-                            .collect(Collectors.toSet())
-                            .containsAll(Set.of("testActionId1", "testActionId3")));
-                    assertEquals(
-                            "testActionId2",
-                            actionCollectionDTO1.getArchivedActions().get(0).getId());
-                    assertTrue(archivedAfter.isBefore(
-                            actionCollectionDTO1.getArchivedActions().get(0).getDeletedAt()));
-                })
-                .verifyComplete();
-    }
-
-    @Test
     public void testDeleteUnpublishedActionCollection_withInvalidId_throwsError() {
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<Optional<AclPermission>>any()))
+        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.empty());
 
         final Mono<ActionCollectionDTO> actionCollectionMono =
@@ -625,8 +513,12 @@ public class ActionCollectionServiceImplTest {
 
         Instant deletedAt = Instant.now();
 
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<Optional<AclPermission>>any()))
+        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.just(actionCollection));
+
+        Mockito.when(newActionService.findByCollectionIdAndViewMode(
+                        Mockito.anyString(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(Flux.empty());
 
         Mockito.when(actionCollectionRepository.save(Mockito.any())).thenAnswer(invocation -> {
             final ActionCollection argument = (ActionCollection) invocation.getArguments()[0];
@@ -659,18 +551,22 @@ public class ActionCollectionServiceImplTest {
                                 .writeValueAsString(jsonNode.get("actionCollectionWithAction")),
                         ActionCollection.class);
         ActionCollectionDTO unpublishedCollection = actionCollection.getUnpublishedCollection();
-        unpublishedCollection.setDefaultToBranchedActionIdsMap(
-                Map.of("defaultTestActionId1", "testActionId1", "defaultTestActionId2", "testActionId2"));
         actionCollection.setDefaultResources(setDefaultResources(actionCollection));
         unpublishedCollection.setDefaultResources(setDefaultResources(unpublishedCollection));
         Instant deletedAt = Instant.now();
 
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<Optional<AclPermission>>any()))
+        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.just(actionCollection));
 
-        Mockito.when(newActionService.deleteUnpublishedAction(Mockito.any()))
-                .thenReturn(Mono.just(
-                        actionCollection.getUnpublishedCollection().getActions().get(0)));
+        ActionDTO actionDTO =
+                actionCollection.getUnpublishedCollection().getActions().get(0);
+        NewAction newAction = new NewAction();
+        newAction.setUnpublishedAction(actionDTO);
+        Mockito.when(newActionService.findByCollectionIdAndViewMode(
+                        Mockito.anyString(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(Flux.just(newAction));
+
+        Mockito.when(newActionService.deleteGivenNewAction(Mockito.any())).thenReturn(Mono.just(actionDTO));
 
         Mockito.when(actionCollectionRepository.save(Mockito.any())).thenAnswer(invocation -> {
             final ActionCollection argument = (ActionCollection) invocation.getArguments()[0];
@@ -710,8 +606,18 @@ public class ActionCollectionServiceImplTest {
                 .getUnpublishedCollection()
                 .setDefaultResources(setDefaultResources(actionCollection.getUnpublishedCollection()));
 
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<Optional<AclPermission>>any()))
+        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.just(actionCollection));
+
+        ActionDTO actionDTO =
+                actionCollection.getUnpublishedCollection().getActions().get(0);
+        NewAction newAction = new NewAction();
+        newAction.setUnpublishedAction(actionDTO);
+        Mockito.when(newActionService.findByCollectionIdAndViewMode(
+                        Mockito.anyString(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(Flux.just(newAction));
+
+        Mockito.when(newActionService.archiveGivenNewAction(Mockito.any())).thenReturn(Mono.just(newAction));
 
         Mockito.when(actionCollectionRepository.findById(Mockito.anyString())).thenReturn(Mono.just(actionCollection));
 
@@ -739,10 +645,6 @@ public class ActionCollectionServiceImplTest {
                                 .writerWithView(Views.Public.class)
                                 .writeValueAsString(jsonNode.get("actionCollectionWithAction")),
                         ActionCollection.class);
-        actionCollection
-                .getUnpublishedCollection()
-                .setDefaultToBranchedActionIdsMap(
-                        Map.of("defaultTestActionId1", "testActionId1", "defaultTestActionId2", "testActionId2"));
         actionCollection.setPublishedCollection(null);
         DefaultResources resources = new DefaultResources();
         resources.setApplicationId("testApplicationId");
@@ -752,8 +654,18 @@ public class ActionCollectionServiceImplTest {
                 .getUnpublishedCollection()
                 .setDefaultResources(setDefaultResources(actionCollection.getUnpublishedCollection()));
 
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<Optional<AclPermission>>any()))
+        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
                 .thenReturn(Mono.just(actionCollection));
+
+        ActionDTO actionDTO =
+                actionCollection.getUnpublishedCollection().getActions().get(0);
+        NewAction newAction = new NewAction();
+        newAction.setUnpublishedAction(actionDTO);
+        Mockito.when(newActionService.findByCollectionIdAndViewMode(
+                        Mockito.anyString(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(Flux.just(newAction));
+
+        Mockito.when(newActionService.archiveGivenNewAction(Mockito.any())).thenReturn(Mono.just(newAction));
 
         Mockito.when(actionCollectionRepository.findById(Mockito.anyString())).thenReturn(Mono.just(actionCollection));
 
@@ -766,89 +678,6 @@ public class ActionCollectionServiceImplTest {
 
         StepVerifier.create(actionCollectionDTOMono)
                 .assertNext(Assertions::assertNotNull)
-                .verifyComplete();
-    }
-
-    @Test
-    public void testMoveCollection_toValidPage_returnsCollection() throws IOException {
-        final ActionCollectionMoveDTO actionCollectionMoveDTO = new ActionCollectionMoveDTO();
-        actionCollectionMoveDTO.setCollectionId("testCollectionId");
-        actionCollectionMoveDTO.setDestinationPageId("newPageId");
-
-        final ActionCollection actionCollection = new ActionCollection();
-        final ActionCollectionDTO unpublishedCollection = new ActionCollectionDTO();
-        unpublishedCollection.setPageId("oldPageId");
-        unpublishedCollection.setName("collectionName");
-        unpublishedCollection.setDefaultResources(setDefaultResources(unpublishedCollection));
-        unpublishedCollection.setDefaultToBranchedActionIdsMap(Map.of("defaultTestActionId", "testActionId"));
-        actionCollection.setUnpublishedCollection(unpublishedCollection);
-        actionCollection.setDefaultResources(setDefaultResources(actionCollection));
-        unpublishedCollection.setDefaultResources(setDefaultResources(unpublishedCollection));
-
-        ActionDTO action = new ActionDTO();
-        action.setName("testAction");
-        DefaultResources actionResources = new DefaultResources();
-        actionResources.setActionId("testAction");
-        actionResources.setPageId("newPageId");
-        action.setDefaultResources(actionResources);
-
-        Mockito.when(actionCollectionRepository.findById(Mockito.any(), Mockito.<AclPermission>any()))
-                .thenReturn(Mono.just(actionCollection));
-
-        Mockito.when(newActionService.findActionDTObyIdAndViewMode(Mockito.any(), Mockito.anyBoolean(), Mockito.any()))
-                .thenReturn(Mono.just(action));
-
-        Mockito.when(newActionService.updateUnpublishedAction(Mockito.any(), Mockito.any()))
-                .thenReturn(Mono.just(new ActionDTO()));
-
-        Mockito.when(actionCollectionRepository.findById(Mockito.anyString())).thenReturn(Mono.just(actionCollection));
-
-        Mockito.when(reactiveMongoTemplate.updateFirst(Mockito.any(), Mockito.any(), Mockito.any(Class.class)))
-                .thenReturn(Mono.just(UpdateResult.acknowledged(1, 1L, new BsonObjectId())));
-
-        PageDTO oldPageDTO = new PageDTO();
-        oldPageDTO.setId("oldPageId");
-        oldPageDTO.setLayouts(List.of(new Layout()));
-
-        PageDTO newPageDTO = new PageDTO();
-        newPageDTO.setId("newPageId");
-        newPageDTO.setLayouts(List.of(new Layout()));
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        final JsonNode jsonNode = objectMapper.readValue(mockObjects, JsonNode.class);
-        final NewPage newPage = objectMapper.convertValue(jsonNode.get("newPage"), NewPage.class);
-        DefaultResources pageDefaultResources = new DefaultResources();
-        pageDefaultResources.setPageId(newPage.getId());
-        newPage.setDefaultResources(pageDefaultResources);
-
-        Mockito.when(newPageService.findPageById(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
-                .thenReturn(Mono.just(oldPageDTO))
-                .thenReturn(Mono.just(newPageDTO));
-
-        Mockito.when(newPageService.findById(Mockito.any(), Mockito.<AclPermission>any()))
-                .thenReturn(Mono.just(newPage));
-
-        LayoutDTO layout = new LayoutDTO();
-        final JSONObject jsonObject = new JSONObject();
-        jsonObject.put("key", "value");
-        layout.setDsl(jsonObject);
-
-        Mockito.when(updateLayoutService.unescapeMongoSpecialCharacters(Mockito.any()))
-                .thenReturn(jsonObject);
-
-        Mockito.when(updateLayoutService.updateLayout(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenReturn(Mono.just(layout));
-
-        Mockito.when(actionCollectionRepository.setUserPermissionsInObject(Mockito.any()))
-                .thenReturn(Mono.just(actionCollection));
-
-        final Mono<ActionCollectionDTO> actionCollectionDTOMono =
-                layoutCollectionService.moveCollection(actionCollectionMoveDTO);
-
-        StepVerifier.create(actionCollectionDTOMono)
-                .assertNext(actionCollectionDTO -> {
-                    assertEquals("newPageId", actionCollectionDTO.getPageId());
-                })
                 .verifyComplete();
     }
 

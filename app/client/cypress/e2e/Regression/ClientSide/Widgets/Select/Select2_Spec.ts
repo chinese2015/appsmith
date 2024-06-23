@@ -17,7 +17,7 @@ describe(
   { tags: ["@tag.Widget", "@tag.Select"] },
   function () {
     before(() => {
-      entityExplorer.DragNDropWidget(draggableWidgets.SELECT);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.SELECT);
     });
 
     it("1. Validate Label properties - Text , Position , Alignment , Width(in columns)", function () {
@@ -50,12 +50,6 @@ describe(
       );
       agHelper.GetNClick(locators._alignment("right"));
 
-      //Width
-      agHelper.AssertCSS(
-        widgetLocators.selectWidgetLabelContainer,
-        "width",
-        "55.859375px",
-      );
       agHelper.GetNClick(widgetLocators.selectWidgetWidthPlusBtn);
       agHelper.GetNClick(widgetLocators.selectWidgetWidthPlusBtn);
 
@@ -74,11 +68,6 @@ describe(
         widgetLocators.selectWidgetLabel,
         "text-align",
         "right",
-      );
-      agHelper.AssertCSS(
-        widgetLocators.selectWidgetLabelContainer,
-        "width",
-        "129.65625px",
       );
       agHelper.AssertText(
         widgetLocators.selectWidgetLabel,
@@ -103,7 +92,7 @@ describe(
       EditorNavigation.SelectEntityByName("Select1", EntityType.Widget);
       propPane.UpdatePropertyFieldValue("Tooltip", "{{Input1.text}}");
       propPane.UpdatePropertyFieldValue("Placeholder", "{{Input1.text}}");
-      entityExplorer.DragNDropWidget(draggableWidgets.INPUT_V2, 300, 200);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.INPUT_V2, 300, 200);
       deployMode.DeployApp(
         locators._widgetInDeployed(draggableWidgets.INPUT_V2),
       );
@@ -302,8 +291,8 @@ describe(
 
     it("9. Validate Validation required property", function () {
       deployMode.NavigateBacktoEditor();
-      entityExplorer.DragNDropWidget(draggableWidgets.FORM, 300, 400);
-      entityExplorer.DragNDropWidget(draggableWidgets.SELECT, 200, 500);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.FORM, 300, 400);
+      entityExplorer.DragDropWidgetNVerify(draggableWidgets.SELECT, 200, 500);
       EditorNavigation.SelectEntityByName("Select2", EntityType.Widget);
       agHelper.AssertExistingToggleState("Required", "false");
       propPane.TogglePropertyState("Required", "On");

@@ -1,24 +1,21 @@
-import { FILL_WIDGET_MIN_WIDTH } from "constants/minWidthConstants";
 import { ResponsiveBehavior } from "layoutSystems/common/utils/constants";
+import type { WidgetDefaultProps } from "WidgetProvider/constants";
 
 export const defaultsConfig = {
-  rows: 10,
-  columns: 20,
   animateLoading: true,
   options: [
     { label: "Blue", value: "BLUE" },
     { label: "Green", value: "GREEN" },
     { label: "Red", value: "RED" },
   ],
-  defaultSelectedValues: ["BLUE"],
+  defaultSelectedValues: ["BLUE", "RED"],
   isDisabled: false,
   isRequired: false,
   isVisible: true,
-  labelPosition: "right",
+  labelPosition: "end",
   label: "Label",
   orientation: "vertical",
   version: 1,
   widgetName: "SwitchGroup",
   responsiveBehavior: ResponsiveBehavior.Fill,
-  minWidth: FILL_WIDGET_MIN_WIDTH,
-};
+} as unknown as WidgetDefaultProps;

@@ -2,6 +2,7 @@ package com.appsmith.server.dtos;
 
 import com.appsmith.external.models.DefaultResources;
 import com.appsmith.external.models.Policy;
+import com.appsmith.external.views.Git;
 import com.appsmith.external.views.Views;
 import com.appsmith.server.domains.Layout;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -10,43 +11,46 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Transient;
 
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
+@FieldNameConstants
 public class PageDTO {
 
     @Transient
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class})
     private String id;
 
-    @JsonView({Views.Public.class, Views.Export.class})
+    @JsonView({Views.Public.class, Views.Export.class, Git.class})
     String name;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class})
     String icon;
 
     @JsonView(Views.Public.class)
     String description;
 
-    @JsonView({Views.Public.class, Views.Export.class})
+    @JsonView({Views.Public.class, Views.Export.class, Git.class})
     String slug;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     String customSlug;
 
     @Transient
     @JsonView(Views.Public.class)
     String applicationId;
 
-    @JsonView({Views.Public.class, Views.Export.class})
+    @JsonView({Views.Public.class, Views.Export.class, Git.class})
     List<Layout> layouts;
 
     @Transient
@@ -61,7 +65,7 @@ public class PageDTO {
     @JsonView(Views.Public.class)
     Instant deletedAt = null;
 
-    @JsonView(Views.Public.class)
+    @JsonView({Views.Public.class, Git.class})
     Boolean isHidden;
 
     @Transient
@@ -74,7 +78,12 @@ public class PageDTO {
     @JsonView(Views.Public.class)
     DefaultResources defaultResources;
 
+    // TODO: get this clarified for GIT annotation
+    @JsonView({Views.Public.class, Git.class})
+    Map<String, List<String>> dependencyMap;
+
     public void sanitiseToExportDBObject() {
+        this.setDependencyMap(null);
         this.getLayouts().forEach(Layout::sanitiseToExportDBObject);
     }
 }

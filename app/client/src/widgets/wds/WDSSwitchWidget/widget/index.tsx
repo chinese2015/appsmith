@@ -29,10 +29,6 @@ class WDSSwitchWidget extends BaseWidget<SwitchWidgetProps, WidgetState> {
     return config.methodsConfig;
   }
 
-  static getAutoLayoutConfig() {
-    return {};
-  }
-
   static getAnvilConfig(): AnvilConfig | null {
     return config.anvilConfig;
   }
@@ -98,13 +94,13 @@ class WDSSwitchWidget extends BaseWidget<SwitchWidgetProps, WidgetState> {
   getWidgetView() {
     return (
       <Switch
+        excludeFromTabOrder={this.props.disableWidgetInteraction}
         id={this.props.widgetId}
         isDisabled={this.props.isDisabled}
-        isSelected={!!this.props.isSwitchedOn}
+        isInvalid={this.props.isValid === "invalid"}
         key={this.props.widgetId}
         labelPosition={this.props.labelPosition}
         onChange={this.onChange}
-        validationState={this.props.isValid ? "valid" : "invalid"}
       >
         {this.props.label}
       </Switch>

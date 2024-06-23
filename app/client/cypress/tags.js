@@ -1,5 +1,6 @@
 module.exports = {
   Tag: [
+    "@tag.Anvil",
     "@tag.excludeForAirgap",
     "@tag.airgap",
     "@tag.Git",
@@ -35,7 +36,6 @@ module.exports = {
     "@tag.Progress",
     "@tag.Video",
     "@tag.Container",
-    "@tag.Table",
     "@tag.Camera",
     "@tag.Image",
     "@tag.Tab",
@@ -58,7 +58,15 @@ module.exports = {
     "@tag.PropertyPane",
     "@tag.Workspace",
     "@tag.Sanity",
-    "@tag.Templates",
+    "@tag.Auditlogs",
+    "@tag.AccessControl",
+    "@tag.LicenseAndBilling",
     "@tag.Authentication",
+    "@tag.Provisioning",
+    "@tag.Templates",
+    "@tag.MainContainer",
+    "@tag.Visual",
+    "@tag.Module",
+    "@tag.Workflows",
   ],
 };

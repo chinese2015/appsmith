@@ -11,13 +11,14 @@ import {
   widgetCanvasFactory,
 } from "test/factories/WidgetFactoryUtils";
 import { sagasToRunForTests } from "test/sagas";
-import { MockApplication, mockGetCanvasWidgetDsl } from "test/testCommon";
+import { MockApplication } from "test/testCommon";
 import { UpdateAppViewer, UpdatedEditor } from "test/testMockedWidgets";
 import { render } from "test/testUtils";
 import { generateReactKey } from "widgets/WidgetUtils";
+
+const pageId = "0123456789abcdef00000000";
 describe("ContainerWidget tests", () => {
   const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-  const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
   jest
     .spyOn(useDynamicAppLayoutHook, "useDynamicAppLayout")
     .mockImplementation(() => true);
@@ -63,7 +64,6 @@ describe("ContainerWidget tests", () => {
     const dsl: any = widgetCanvasFactory.build({
       children: containerChildren,
     });
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
     const spyUseCanvasDragging = jest
       .spyOn(useCanvasDraggingHook, "useCanvasDragging")
@@ -72,7 +72,9 @@ describe("ContainerWidget tests", () => {
       }));
     const appState = store.getState();
     render(
-      <MemoryRouter initialEntries={["/app/applicationSlug/pageSlug-page_id/"]}>
+      <MemoryRouter
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/`]}
+      >
         <MockApplication>
           <GlobalHotKeys>
             <UpdateAppViewer dsl={dsl} />
@@ -85,7 +87,7 @@ describe("ContainerWidget tests", () => {
     expect(spyUseCanvasDragging).not.toHaveBeenCalled();
     render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>

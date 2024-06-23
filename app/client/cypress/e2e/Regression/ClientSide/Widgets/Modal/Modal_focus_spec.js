@@ -1,8 +1,8 @@
 import EditorNavigation, {
   EntityType,
+  PageLeftPane,
 } from "../../../../../support/Pages/EditorNavigation";
 
-const explorer = require("../../../../../locators/explorerlocators.json");
 const widgets = require("../../../../../locators/Widgets.json");
 import * as _ from "../../../../../support/Objects/ObjectsCore";
 
@@ -17,13 +17,13 @@ describe("Modal focus", { tags: ["@tag.Widget", "@tag.Modal"] }, function () {
 
     cy.updateCodeInput(
       ".t--property-control-onclick",
-      `{{showModal('Modal1')}}`,
+      `{{showModal(Modal1.name)}}`,
     );
     //add modal
     EditorNavigation.SelectEntityByName("Modal1", EntityType.Widget);
     cy.get(widgets.modalWidget).should("exist");
 
-    cy.get(explorer.addWidget).click();
+    PageLeftPane.switchToAddNew();
 
     cy.wait(500);
     //drag input field into modal

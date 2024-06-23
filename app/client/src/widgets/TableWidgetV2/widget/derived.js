@@ -187,7 +187,9 @@ export default {
         tableSizes.COLUMN_HEADER_HEIGHT) /
       tableSizes.ROW_HEIGHT;
 
-    return pageSize % 1 > 0.3 ? Math.ceil(pageSize) : Math.floor(pageSize);
+    return pageSize % 1 > 0.3 && props.tableData.length > pageSize
+      ? Math.ceil(pageSize)
+      : Math.floor(pageSize);
   },
   //
   getProcessedTableData: (props, moment, _) => {
@@ -326,7 +328,18 @@ export default {
         sortBycolumn && sortBycolumn.columnType
           ? sortBycolumn.columnType
           : "text";
-      const inputFormat = sortBycolumn.inputFormat;
+
+      let inputFormat = (() => {
+        switch (sortBycolumn.inputFormat) {
+          case "Epoch":
+            return "X";
+          case "Milliseconds":
+            return "x";
+          default:
+            return sortBycolumn.inputFormat;
+        }
+      })();
+
       const isEmptyOrNil = (value) => {
         return _.isNil(value) || value === "";
       };

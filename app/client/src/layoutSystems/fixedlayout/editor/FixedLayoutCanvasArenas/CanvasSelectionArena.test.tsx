@@ -1,5 +1,4 @@
 import { MAIN_CONTAINER_WIDGET_ID } from "constants/WidgetConstants";
-import Canvas from "pages/Editor/Canvas";
 import GlobalHotKeys from "pages/Editor/GlobalHotKeys";
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -14,7 +13,6 @@ import { sagasToRunForTests } from "test/sagas";
 import {
   MockApplication,
   mockCreateCanvasWidget,
-  mockGetCanvasWidgetDsl,
   mockGetWidgetEvalValues,
   MockPageDSL,
   syntheticTestMouseEvent,
@@ -25,6 +23,9 @@ import { generateReactKey } from "utils/generators";
 import * as widgetRenderUtils from "utils/widgetRenderUtils";
 import * as widgetSelectionsActions from "actions/widgetSelectionActions";
 import { SelectionRequestType } from "sagas/WidgetSelectUtils";
+import Canvas from "pages/Editor/Canvas";
+
+const pageId = "0123456789abcdef00000000";
 
 describe("Canvas selection test cases", () => {
   jest
@@ -74,12 +75,10 @@ describe("Canvas selection test cases", () => {
       children,
     });
     const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-    const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -136,12 +135,10 @@ describe("Canvas selection test cases", () => {
       children,
     });
     const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-    const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -234,13 +231,11 @@ describe("Canvas selection test cases", () => {
       children: containerChildren,
     });
     const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-    const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -306,11 +301,7 @@ describe("Canvas selection test cases", () => {
 
     const component = render(
       <MockPageDSL dsl={dsl}>
-        <Canvas
-          canvasWidth={dsl.rightColumn}
-          pageId="page_id"
-          widgetsStructure={dsl}
-        />
+        <Canvas canvasWidth={dsl.rightColumn} widgetsStructure={dsl} />
       </MockPageDSL>,
     );
     const selectionCanvas: any = component.queryByTestId(`canvas-${canvasId}`);
@@ -371,13 +362,11 @@ describe("Canvas selection test cases", () => {
       children: containerChildren,
     });
     const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-    const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -442,7 +431,6 @@ describe("Canvas selection test cases", () => {
 
   it("Draw to select from outside of canvas(editor) ", () => {
     const mockGetIsFetchingPage = jest.spyOn(utilities, "getIsFetchingPage");
-    const spyGetCanvasWidgetDsl = jest.spyOn(utilities, "getCanvasWidgetDsl");
     const children: any = buildChildren([
       {
         type: "TABS_WIDGET",
@@ -466,12 +454,11 @@ describe("Canvas selection test cases", () => {
     const dsl: any = widgetCanvasFactory.build({
       children,
     });
-    spyGetCanvasWidgetDsl.mockImplementation(mockGetCanvasWidgetDsl);
     mockGetIsFetchingPage.mockImplementation(() => false);
 
     const component = render(
       <MemoryRouter
-        initialEntries={["/app/applicationSlug/pageSlug-page_id/edit"]}
+        initialEntries={[`/app/applicationSlug/pageSlug-${pageId}/edit`]}
       >
         <MockApplication>
           <GlobalHotKeys>
@@ -481,7 +468,7 @@ describe("Canvas selection test cases", () => {
       </MemoryRouter>,
       { initialState: store.getState(), sagasToRun: sagasToRunForTests },
     );
-    const widgetEditor: any = component.queryByTestId("widgets-editor");
+    const widgetEditor: any = component.queryByTestId("t--widgets-editor");
     let selectionCanvas: any = component.queryByTestId(
       `canvas-selection-${MAIN_CONTAINER_WIDGET_ID}`,
     );

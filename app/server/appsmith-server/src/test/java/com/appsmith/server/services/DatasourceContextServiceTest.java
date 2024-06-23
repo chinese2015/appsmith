@@ -1,6 +1,7 @@
 package com.appsmith.server.services;
 
 import com.appsmith.external.constants.PluginConstants;
+import com.appsmith.external.helpers.EncryptionHelper;
 import com.appsmith.external.helpers.restApiUtils.connections.APIConnection;
 import com.appsmith.external.helpers.restApiUtils.connections.APIConnectionFactory;
 import com.appsmith.external.helpers.restApiUtils.connections.BearerTokenAuthentication;
@@ -17,7 +18,6 @@ import com.appsmith.external.models.DatasourceStorageDTO;
 import com.appsmith.external.models.OAuth2;
 import com.appsmith.external.models.UpdatableConnection;
 import com.appsmith.external.plugins.PluginExecutor;
-import com.appsmith.external.services.EncryptionService;
 import com.appsmith.server.applications.base.ApplicationService;
 import com.appsmith.server.datasources.base.DatasourceService;
 import com.appsmith.server.datasourcestorages.base.DatasourceStorageService;
@@ -38,7 +38,6 @@ import com.appsmith.server.solutions.ApplicationPermission;
 import com.appsmith.server.solutions.DatasourcePermission;
 import com.appsmith.server.solutions.EnvironmentPermission;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +55,7 @@ import reactor.test.StepVerifier;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,9 +72,6 @@ import static org.mockito.Mockito.spy;
 @SpringBootTest
 @Slf4j
 public class DatasourceContextServiceTest {
-
-    @Autowired
-    EncryptionService encryptionService;
 
     @Autowired
     WorkspaceRepository workspaceRepository;
@@ -287,7 +284,7 @@ public class DatasourceContextServiceTest {
                     DBAuth encryptedAuthentication = (DBAuth) savedDatasourceStorageDTO
                             .getDatasourceConfiguration()
                             .getAuthentication();
-                    assertEquals(password, encryptionService.decryptString(encryptedAuthentication.getPassword()));
+                    assertEquals(password, EncryptionHelper.decrypt(encryptedAuthentication.getPassword()));
                 })
                 .verifyComplete();
     }
@@ -581,7 +578,7 @@ public class DatasourceContextServiceTest {
     @Test
     @WithUserDetails(value = "api_user")
     public void verifyInitialiseDatasourceContextReturningRightIdentifier() {
-        String sampleDatasourceId = new ObjectId().toHexString();
+        String sampleDatasourceId = UUID.randomUUID().toString();
         DatasourceStorage datasourceStorage = new DatasourceStorage();
         datasourceStorage.setDatasourceId(sampleDatasourceId);
         datasourceStorage.setEnvironmentId(defaultEnvironmentId);
@@ -732,7 +729,7 @@ public class DatasourceContextServiceTest {
     @Test
     @WithUserDetails(value = "api_user")
     public void verifyDatasourceContext_withRateLimitExceeded_returnsTooManyRequests() {
-        String sampleDatasourceId = new ObjectId().toHexString();
+        String sampleDatasourceId = UUID.randomUUID().toString();
         Plugin redshiftPlugin = pluginService
                 .findByPackageName(PluginConstants.PackageName.REDSHIFT_PLUGIN)
                 .block();
@@ -753,5 +750,24 @@ public class DatasourceContextServiceTest {
                     assertEquals(expectedErrorMessage, error.getMessage());
                 })
                 .verify();
+    }
+
+    @Test
+    @WithUserDetails(value = "api_user")
+    public void verifyDeleteDatasourceContext_whenContextDoesNotExist_returnsEmptyMono() {
+
+        String sampleDatasourceId = UUID.randomUUID().toString();
+        String samplePluginId = UUID.randomUUID().toString();
+
+        DatasourceStorage datasourceStorage = new DatasourceStorage();
+        datasourceStorage.setDatasourceId(sampleDatasourceId);
+        datasourceStorage.setEnvironmentId(defaultEnvironmentId);
+        datasourceStorage.setPluginId(samplePluginId);
+
+        MockPluginExecutor mockPluginExecutor = new MockPluginExecutor();
+        MockPluginExecutor spyMockPluginExecutor = spy(mockPluginExecutor);
+        StepVerifier.create(datasourceContextService.deleteDatasourceContext(datasourceStorage))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 }

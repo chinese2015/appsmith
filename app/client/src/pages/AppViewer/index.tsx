@@ -18,6 +18,7 @@ import AppViewerPageContainer from "./AppViewerPageContainer";
 import * as Sentry from "@sentry/react";
 import {
   getCurrentPageDescription,
+  getIsAutoLayout,
   getViewModePageList,
 } from "selectors/editorSelectors";
 import { getThemeDetails, ThemeMode } from "selectors/themeSelectors";
@@ -26,7 +27,6 @@ import { getSelectedAppTheme } from "selectors/appThemingSelectors";
 import { useSelector } from "react-redux";
 import BrandingBadge from "./BrandingBadge";
 import { setAppViewHeaderHeight } from "actions/appViewActions";
-import { showPostCompletionMessage } from "selectors/onboardingSelectors";
 import { CANVAS_SELECTOR } from "constants/WidgetConstants";
 import { setupPublishedPage } from "actions/pageActions";
 import usePrevious from "utils/hooks/usePrevious";
@@ -36,7 +36,6 @@ import { initAppViewer } from "actions/initActions";
 import { WidgetGlobaStyles } from "globalStyles/WidgetGlobalStyles";
 import useWidgetFocus from "utils/hooks/useWidgetFocus/useWidgetFocus";
 import HtmlTitle from "./AppViewerHtmlTitle";
-import BottomBar from "components/BottomBar";
 import type { ApplicationPayload } from "@appsmith/constants/ReduxActionConstants";
 import {
   getAppThemeSettings,
@@ -44,39 +43,28 @@ import {
 } from "@appsmith/selectors/applicationSelectors";
 import { editorInitializer } from "../../utils/editor/EditorUtils";
 import { widgetInitialisationSuccess } from "../../actions/widgetActions";
-import {
-  areEnvironmentsFetched,
-  getEnvironmentsWithPermission,
-} from "@appsmith/selectors/environmentSelectors";
 import type { FontFamily } from "@design-system/theming";
 import {
   ThemeProvider as WDSThemeProvider,
   useTheme,
 } from "@design-system/theming";
-import { useFeatureFlag } from "utils/hooks/useFeatureFlag";
-import { RAMP_NAME } from "utils/ProductRamps/RampsControlList";
-import { showProductRamps } from "@appsmith/selectors/rampSelectors";
-import { FEATURE_FLAG } from "@appsmith/entities/FeatureFlag";
 import { KBViewerFloatingButton } from "@appsmith/pages/AppViewer/KnowledgeBase/KBViewerFloatingButton";
 import urlBuilder from "@appsmith/entities/URLRedirect/URLAssembly";
 import { getHideWatermark } from "@appsmith/selectors/tenantSelectors";
+import { getIsAnvilLayout } from "layoutSystems/anvil/integrations/selectors";
 
 const AppViewerBody = styled.section<{
   hasPages: boolean;
   headerHeight: number;
-  showGuidedTourMessage: boolean;
-  showBottomBar: boolean;
+  $contain: string;
 }>`
   display: flex;
   flex-direction: row;
   align-items: stretch;
   justify-content: flex-start;
-  height: calc(
-    100vh -
-      ${(props) => (props.showBottomBar ? props.theme.bottomBarHeight : "0px")} -
-      ${({ headerHeight }) => headerHeight}px
-  );
+  height: calc(100vh - ${({ headerHeight }) => headerHeight}px);
   --view-mode-header-height: ${({ headerHeight }) => headerHeight}px;
+  contain: ${({ $contain }) => $contain};
 `;
 
 const AppViewerBodyContainer = styled.div<{
@@ -105,7 +93,6 @@ function AppViewer(props: Props) {
   const lightTheme = useSelector((state: AppState) =>
     getThemeDetails(state, ThemeMode.LIGHT),
   );
-  const showGuidedTourMessage = useSelector(showPostCompletionMessage);
   const headerHeight = useSelector(getAppViewHeaderHeight);
   const branch = getSearchQuery(search, GIT_BRANCH_QUERY_KEY);
   const prevValues = usePrevious({ branch, location: props.location, pageId });
@@ -114,7 +101,7 @@ function AppViewer(props: Props) {
   const currentApplicationDetails: ApplicationPayload | undefined = useSelector(
     getCurrentApplication,
   );
-  const isWDSEnabled = useFeatureFlag("ab_wds_enabled");
+  const isAnvilLayout = useSelector(getIsAnvilLayout);
   const themeSetting = useSelector(getAppThemeSettings);
   const themeProps = {
     borderRadius: selectedTheme.properties.borderRadius.appBorderRadius,
@@ -128,29 +115,11 @@ function AppViewer(props: Props) {
     fontFamily: themeSetting.fontFamily as FontFamily,
     userSizing: themeSetting.sizing,
     userDensity: themeSetting.density,
+    iconStyle: themeSetting.iconStyle.toLowerCase(),
   };
-  const { theme } = useTheme(isWDSEnabled ? wdsThemeProps : themeProps);
+  const { theme } = useTheme(isAnvilLayout ? wdsThemeProps : themeProps);
   const focusRef = useWidgetFocus();
-
-  const showRampSelector = showProductRamps(RAMP_NAME.MULTIPLE_ENV, true);
-  const canShowRamp = useSelector(showRampSelector);
-
-  const workspaceId = currentApplicationDetails?.workspaceId || "";
-  const isMultipleEnvEnabled = useFeatureFlag(
-    FEATURE_FLAG.release_datasource_environments_enabled,
-  );
-  const environmentList = useSelector(getEnvironmentsWithPermission);
-  // If there is only one environment and it is default, don't show the bottom bar
-  const isOnlyDefaultShown =
-    environmentList.length === 1 && environmentList[0]?.isDefault;
-  const showBottomBar = useSelector((state: AppState) => {
-    return (
-      areEnvironmentsFetched(state, workspaceId) &&
-      (isMultipleEnvEnabled || canShowRamp) &&
-      environmentList.length > 0 &&
-      !isOnlyDefaultShown
-    );
-  });
+  const isAutoLayout = useSelector(getIsAutoLayout);
 
   /**
    * initializes the widgets factory and registers all widgets
@@ -231,7 +200,7 @@ function AppViewer(props: Props) {
   const renderChildren = () => {
     return (
       <EditorContextProvider renderMode="PAGE">
-        {!isWDSEnabled && (
+        {!isAnvilLayout && (
           <WidgetGlobaStyles
             fontFamily={selectedTheme.properties.fontFamily.appFont}
             primaryColor={selectedTheme.properties.colors.primaryColor}
@@ -243,25 +212,20 @@ function AppViewer(props: Props) {
         />
         <AppViewerBodyContainer
           backgroundColor={
-            isWDSEnabled ? "" : selectedTheme.properties.colors.backgroundColor
+            isAnvilLayout ? "" : selectedTheme.properties.colors.backgroundColor
           }
         >
           <AppViewerBody
+            $contain={isAutoLayout ? "content" : "strict"}
             className={CANVAS_SELECTOR}
+            data-testid="t--app-viewer-page-body"
             hasPages={pages.length > 1}
             headerHeight={headerHeight}
             ref={focusRef}
-            showBottomBar={!!showBottomBar}
-            showGuidedTourMessage={showGuidedTourMessage}
           >
             {isInitialized && <AppViewerPageContainer />}
           </AppViewerBody>
-          {showBottomBar && <BottomBar viewMode />}
-          <div
-            className={`fixed hidden right-8 z-3 md:flex ${
-              showBottomBar ? "bottom-12" : "bottom-4"
-            }`}
-          >
+          <div className={"fixed hidden right-8 z-3 md:flex bottom-4"}>
             {!hideWatermark && (
               <a
                 className="hover:no-underline"
@@ -279,7 +243,7 @@ function AppViewer(props: Props) {
     );
   };
 
-  if (isWDSEnabled) {
+  if (isAnvilLayout) {
     return (
       <WDSThemeProvider theme={theme}>{renderChildren()}</WDSThemeProvider>
     );

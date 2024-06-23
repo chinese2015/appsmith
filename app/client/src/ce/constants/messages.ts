@@ -16,6 +16,7 @@ export const INTERCOM_CONSENT_MESSAGE = () =>
   `Can we have your email for better support?`;
 export const YES = () => `Yes`;
 export const ARE_YOU_SURE = () => `Are you sure?`;
+export const CHAT_WITH_US = () => `Chat with us`;
 export const ERROR_ADD_API_INVALID_URL = () =>
   `Unable to create API. Try adding a URL to the datasource`;
 export const ERROR_MESSAGE_NAME_EMPTY = () => `Please select a name`;
@@ -51,13 +52,12 @@ export const ENTER_AUDIO_URL = () => `Please provide a valid url`;
 
 export const FORM_VALIDATION_EMPTY_PASSWORD = () => `Please enter the password`;
 export const FORM_VALIDATION_PASSWORD_RULE = () =>
-  `Please provide a password between 6 and 256 characters`;
+  `Please provide a password between 8 and 48 characters`;
 export const FORM_VALIDATION_INVALID_PASSWORD = FORM_VALIDATION_PASSWORD_RULE;
 
 export const LOGIN_PAGE_EMAIL_INPUT_LABEL = () => `Email`;
 export const LOGIN_PAGE_PASSWORD_INPUT_LABEL = () => `Password`;
-export const LOGIN_PAGE_EMAIL_INPUT_PLACEHOLDER = () =>
-  `Enter your email address`;
+export const LOGIN_PAGE_EMAIL_INPUT_PLACEHOLDER = () => `Enter your email`;
 export const LOGIN_PAGE_PASSWORD_INPUT_PLACEHOLDER = () =>
   `Enter your password`;
 export const LOGIN_PAGE_INVALID_CREDS_ERROR = () =>
@@ -65,25 +65,28 @@ export const LOGIN_PAGE_INVALID_CREDS_ERROR = () =>
 export const LOGIN_PAGE_INVALID_CREDS_FORGOT_PASSWORD_LINK = () =>
   `Reset password`;
 export const NEW_TO_APPSMITH = () => `Don't have an account?`;
-export const LOGIN_PAGE_TITLE = () => `Sign in`;
+export const LOGIN_PAGE_TITLE = () => `Sign in to your account`;
 export const LOGIN_PAGE_SUBTITLE = () => `Sign in to your account`;
 
 export const LOGIN_PAGE_LOGIN_BUTTON_TEXT = () => `Sign in`;
 export const LOGIN_PAGE_FORGOT_PASSWORD_TEXT = () => `Forgot password`;
 export const LOGIN_PAGE_REMEMBER_ME_LABEL = () => `Remember`;
 export const LOGIN_PAGE_SIGN_UP_LINK_TEXT = () => `Sign up`;
-export const SIGNUP_PAGE_TITLE = () => `Create your free account`;
+export const SIGNUP_PAGE_TITLE = () => `Create your account`;
 export const SIGNUP_PAGE_SUBTITLE = () => `Use your workspace email`;
 export const SIGNUP_PAGE_EMAIL_INPUT_LABEL = () => `Email`;
-export const SIGNUP_PAGE_EMAIL_INPUT_PLACEHOLDER = () => `Email`;
+export const SIGNUP_PAGE_EMAIL_INPUT_PLACEHOLDER = () => `Enter your email`;
 export const SIGNUP_PAGE_NAME_INPUT_PLACEHOLDER = () => `Name`;
 export const SIGNUP_PAGE_NAME_INPUT_LABEL = () => `Name`;
 export const SIGNUP_PAGE_PASSWORD_INPUT_LABEL = () => `Password`;
-export const SIGNUP_PAGE_PASSWORD_INPUT_PLACEHOLDER = () => `Password`;
+export const SIGNUP_PAGE_PASSWORD_INPUT_PLACEHOLDER = () =>
+  `Enter your password`;
 export const SIGNUP_PAGE_LOGIN_LINK_TEXT = () => `Sign in`;
 export const SIGNUP_PAGE_NAME_INPUT_SUBTEXT = () => `How should we call you?`;
 export const SIGNUP_PAGE_SUBMIT_BUTTON_TEXT = () => `Sign up`;
 export const ALREADY_HAVE_AN_ACCOUNT = () => `Already have an account?`;
+export const LOOKING_TO_SELF_HOST = () => "Looking to self-host Appsmith?";
+export const VISIT_OUR_DOCS = () => "Visit our docs";
 
 export const SIGNUP_PAGE_SUCCESS = () =>
   `Awesome! You have successfully registered.`;
@@ -109,11 +112,14 @@ export const RESET_PASSWORD_INVALID_TOKEN = () =>
 export const RESET_PASSWORD_FORGOT_PASSWORD_LINK = () => `Forgot password`;
 
 export const FORGOT_PASSWORD_PAGE_EMAIL_INPUT_LABEL = () => `Email`;
-export const FORGOT_PASSWORD_PAGE_EMAIL_INPUT_PLACEHOLDER = () => `Email`;
+export const FORGOT_PASSWORD_PAGE_EMAIL_INPUT_PLACEHOLDER = () =>
+  `Enter your email`;
 export const FORGOT_PASSWORD_PAGE_TITLE = () => `Reset password`;
+export const FORGOT_PASSWORD_PAGE_SUB_TITLE = () =>
+  `Enter the email address associated with your account`;
 export const FORGOT_PASSWORD_PAGE_SUBTITLE = () =>
   `We will send a reset link to the email below`;
-export const FORGOT_PASSWORD_PAGE_SUBMIT_BUTTON_TEXT = () => `Reset`;
+export const FORGOT_PASSWORD_PAGE_SUBMIT_BUTTON_TEXT = () => `Send reset link`;
 export const FORGOT_PASSWORD_SUCCESS_TEXT = (email: string) =>
   `A password reset link has been sent to your email address ${email} registered with Appsmith.`;
 
@@ -121,12 +127,12 @@ export const VERIFICATION_PENDING_TITLE = () => `Check your inbox`;
 export const VERIFICATION_PENDING_BODY = () =>
   `To finish your account setup click on the verification link we have sent in an email to `;
 
-export const VERIFICATION_PENDING_NOT_YOU = () => `(not you?)`;
+export const VERIFICATION_PENDING_NOT_YOU = () => `Not you?`;
 
 export const VERIFICATION_PENDING_NO_EMAIL = () =>
   `No email in your inbox or spam folder?`;
 
-export const VERIFICATION_PENDING_RESEND_LINK = () => `Resend the link`;
+export const VERIFICATION_PENDING_RESEND_LINK = () => `Resend link`;
 
 export const VERIFY_ERROR_ALREADY_VERIFIED_TITLE = () =>
   `Email already verified`;
@@ -154,6 +160,7 @@ export const ERROR_403 = (entity: string, userEmail: string) =>
 export const PAGE_NOT_FOUND_ERROR = () =>
   `The page you’re looking for either does not exist, or cannot be found`;
 export const INVALID_URL_ERROR = () => `Invalid URL`;
+export const INVALID_NAME_ERROR = () => `Invalid name`;
 export const MAKE_APPLICATION_PUBLIC = () => "Make application public";
 export const MAKE_APPLICATION_PUBLIC_TOOLTIP = () =>
   "A public app is accessible to anyone who can access your instance of appsmith";
@@ -185,6 +192,7 @@ export const INVITE_USER_RAMP_TEXT = () =>
   "Users will have access to all applications in the workspace. For application-level access, try out our ";
 export const CUSTOM_ROLES_RAMP_TEXT = () =>
   "To build and assign custom roles, try out our ";
+export const ASSIGN_CUSTOM_ROLE = () => "Assign Custom Role";
 export const CUSTOM_ROLE_TEXT = () => "Custom role";
 export const CUSTOM_ROLE_DISABLED_OPTION_TEXT = () =>
   "Can access specific applications or only certain pages and queries within an application";
@@ -193,13 +201,15 @@ export const USERS_HAVE_ACCESS_TO_ALL_APPS = () =>
 export const USERS_HAVE_ACCESS_TO_ONLY_THIS_APP = () =>
   "Users will only have access to this application";
 export const NO_USERS_INVITED = () => "You haven't invited any users yet";
-export const BUSINESS_EDITION_TEXT = () => "business edition";
+export const BUSINESS_EDITION_TEXT = () => "business plan";
 export const PARTNER_PROGRAM_CALLOUT = (
   email: string,
 ) => `${email} is outside your organisation. If you’re building this app
 for someone else, you should check out our partner program.`;
 export const PARTNER_PROGRAM_CALLOUT_LINK = () =>
   `Learn about Appsmith Partner Program`;
+export const NEW_APPLICATION = () => `New application`;
+export const APPLICATIONS = () => `Applications`;
 
 export const USER_PROFILE_PICTURE_UPLOAD_FAILED = () =>
   "Unable to upload display picture.";
@@ -216,17 +226,6 @@ export const USER_RESET_PASSWORD = () => "Reset password";
 
 export const CREATE_PASSWORD_RESET_SUCCESS = () => `Your password has been set`;
 export const CREATE_PASSWORD_RESET_SUCCESS_LOGIN_LINK = () => `Login`;
-
-export const DELETING_APPLICATION = () => `Deleting application...`;
-export const DELETING_MULTIPLE_APPLICATION = () =>
-  `Deleting multiple applications...`;
-export const NO_PERMISSION_TO_SELECT_FOR_DELETE = () =>
-  `You don't have permission to delete this application`;
-
-export const DELETING_MULTIPLE_APPLICATION_MODAL_TITLE = () =>
-  `Delete Confirmation`;
-export const DELETING_MULTIPLE_APPLICATION_MODAL_DESC = () =>
-  `Are you sure you want to delete selected applications?`;
 
 export const FORGOT_PASSWORD_PAGE_LOGIN_LINK = () => `Back to sign in`;
 export const ADD_API_TO_PAGE_SUCCESS_MESSAGE = (actionName: string) =>
@@ -263,11 +262,21 @@ export const CREATE_NEW_APPLICATION = () => `Create new`;
 export const SEARCH_APPS = () => `Search for apps...`;
 export const GETTING_STARTED = () => `Getting started`;
 export const WORKSPACES_HEADING = () => `Workspaces`;
+export const CREATE_A_NEW_WORKSPACE = () => `Create a new workspace`;
 export const WELCOME_TOUR = () => `Welcome tour`;
 export const NO_APPS_FOUND = () =>
   `Whale! Whale! This name doesn't ring a bell!`;
 export const APPLICATION_CARD_LIST_ZERO_STATE = () =>
-  `There are no apps in this workspace.`;
+  `There are no applications in this workspace.`;
+export const TRY_GUIDED_TOUR = () => `Try guided tour`;
+export const JOIN_OUR_DISCORD = () => `Join our discord`;
+export const WHATS_NEW = () => `What's new?`;
+export const WORKSPACE_ACTION_BUTTON = () => "Create new";
+export const NEW_APP = () => "Application";
+export const NEW_APP_FROM_TEMPLATE = () => "Templates";
+export const NO_WORKSPACE_HEADING = () => "Oops! No workspace found";
+export const NO_WORKSPACE_DESCRIPTION = () =>
+  "You can find workspace list on the left sidebar, try selecting one of them to access a workspace.";
 
 // Lightning menu
 export const LIGHTNING_MENU_DATA_API = () => `Use data from an API`;
@@ -371,7 +380,7 @@ export const INVALID_FORM_CONFIGURATION = () => "Invalid form configuration";
 export const ACTION_RUN_BUTTON_MESSAGE_FIRST_HALF = () => "🙌 Click on";
 export const ACTION_RUN_BUTTON_MESSAGE_SECOND_HALF = () =>
   "after adding your query";
-export const CREATE_NEW_DATASOURCE = () => "Create new datasource";
+export const CREATE_NEW_DATASOURCE = () => "Create datasource";
 export const CREATE_NEW_DATASOURCE_DATABASE_HEADER = () => "Databases";
 export const CREATE_NEW_DATASOURCE_MOST_POPULAR_HEADER = () => "Most popular";
 export const CREATE_NEW_DATASOURCE_REST_API = () => "REST API";
@@ -451,6 +460,10 @@ export const PAGE_CLIENT_ERROR_DESCRIPTION = () =>
   "This is embarrassing, please contact Appsmith support for help";
 
 export const PAGE_SERVER_UNAVAILABLE_ERROR_CODE = () => "503";
+
+// Modules
+export const CONVERT_MODULE_CTA_TEXT = () => "Create module";
+export const CONVERT_MODULE_TO_NEW_PKG_OPTION = () => "Add to a new package";
 
 // cloudHosting used in EE
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -532,6 +545,7 @@ export const LOGS_FILTER_OPTION_SYSTEM = () => "System logs";
 export const NO_LOGS = () => "No logs to show";
 export const NO_ERRORS = () => "No signs of trouble here!";
 export const DEBUGGER_ERRORS = () => "Errors";
+export const DEBUGGER_RESPONSE = () => "Response";
 export const DEBUGGER_LOGS = () => "Logs";
 export const INSPECT_ENTITY = () => "Inspect entity";
 export const INSPECT_ENTITY_BLANK_STATE = () => "Select an entity to inspect";
@@ -605,8 +619,6 @@ export const JS_EXECUTION_FAILURE = () => "JS Function execution failed";
 export const JS_EXECUTION_FAILURE_TOASTER = () =>
   "There was an error while executing function";
 export const JS_SETTINGS_ONPAGELOAD = () => "Run function on page load (Beta)";
-export const JS_EXECUTION_SUCCESS_TOASTER = (actionName: string) =>
-  `${actionName} ran successfully`;
 export const JS_SETTINGS_ONPAGELOAD_SUBTEXT = () =>
   "Will refresh data every time page is reloaded";
 export const JS_SETTINGS_CONFIRM_EXECUTION = () =>
@@ -621,6 +633,12 @@ export const NO_JS_FUNCTION_TO_RUN = (JSObjectName: string) =>
   `${JSObjectName} has no function`;
 export const NO_JS_FUNCTION_RETURN_VALUE = (JSFunctionName: string) =>
   `${JSFunctionName} did not return any data. Did you add a return statement?`;
+
+export const REMOVE_CONFIRM_BEFORE_CALLING_HEADING = () =>
+  `Remove 'Confirm before calling' `;
+export const REMOVE_CONFIRM_BEFORE_CALLING_DESCRIPTION =
+  () => `By turning off this setting, you won't be able to undo or turn on this setting again,
+as it has been deprecated. Are you sure you want to proceed?`;
 
 // Import/Export Application features
 export const ERROR_IMPORTING_APPLICATION_TO_WORKSPACE = () =>
@@ -679,6 +697,14 @@ export const JS_ACTION_EXECUTION_ERROR = (jsFunctionName: string) =>
 //Editor Page
 export const EDITOR_HEADER_SAVE_INDICATOR = () => "Saved";
 
+//Import Application Succesful
+export const IMPORT_APP_SUCCESSFUL = () => "Application imported successfully";
+//Unable to import application in workspace
+export const UNABLE_TO_IMPORT_APP = () =>
+  "Unable to import application in workspace";
+//
+export const ERROR_IN_EXPORTING_APP = () =>
+  "Error exporting application. Please try again.";
 //undo redo
 export const WIDGET_REMOVED = (widgetName: string) =>
   `${widgetName} is removed`;
@@ -732,14 +758,14 @@ export const NO_CONNECTIONS = () => "No connections to show here";
 export const BACK_TO_CANVAS = () => "Back to canvas";
 export const SUGGESTED_WIDGET_DESCRIPTION = () =>
   "This will add a new widget to the canvas.";
-export const ADD_NEW_WIDGET = () => "Add new widget";
+export const ADD_NEW_WIDGET = () => "Add a widget";
 export const SUGGESTED_WIDGETS = () => "Suggested widgets";
 export const SUGGESTED_WIDGET_TOOLTIP = () => "Add to canvas";
 export const WELCOME_TOUR_STICKY_BUTTON_TEXT = () => "Next mission";
 export const BINDING_SECTION_LABEL = () => "Bindings";
 export const ADD_NEW_WIDGET_SUB_HEADING = () =>
   "Select how you want to display data.";
-export const CONNECT_EXISTING_WIDGET_LABEL = () => "Select a Widget";
+export const CONNECT_EXISTING_WIDGET_LABEL = () => "Select a widget";
 export const CONNECT_EXISTING_WIDGET_SUB_HEADING = () =>
   "Replace the data of an existing widget";
 export const NO_EXISTING_WIDGETS = () => "Display data in a new widget";
@@ -756,8 +782,8 @@ export const EMPTY_ACTIVE_DATA_SOURCES = () => "No active datasources found.";
 
 export const SCHEMA_NOT_AVAILABLE = () => "Schema not available";
 export const TABLE_NOT_FOUND = () => "Table not found.";
-export const DATASOURCE_STRUCTURE_INPUT_PLACEHOLDER_TEXT = () =>
-  "Search for table";
+export const DATASOURCE_STRUCTURE_INPUT_PLACEHOLDER_TEXT = (name: string) =>
+  `Tables in ${name}`;
 export const SCHEMA_LABEL = () => "Schema";
 export const STRUCTURE_NOT_FETCHED = () =>
   "We could not fetch the schema of the database.";
@@ -882,7 +908,7 @@ export const GIT_UPSTREAM_CHANGES = () =>
 export const GIT_CONFLICTING_INFO = () =>
   "Please resolve the merge conflicts manually on your repository.";
 export const CANNOT_PULL_WITH_LOCAL_UNCOMMITTED_CHANGES = () =>
-  "You have uncommitted changes. Please commit before pulling the remote changes.";
+  "You have uncommitted changes. Please commit or discard before pulling the remote changes.";
 export const CANNOT_MERGE_DUE_TO_UNCOMMITTED_CHANGES = () =>
   "Your current branch has uncommitted changes. Please commit them before proceeding to merge.";
 
@@ -1040,12 +1066,6 @@ export const HOW_TO_ADD_DEPLOY_KEY = () =>
 export const CONSENT_ADDED_DEPLOY_KEY = () =>
   "I've added the deploy key and gave it write access";
 export const PREVIOUS_STEP = () => "Previous step";
-export const GIT_CONNECT_SUCCESS_TITLE = () =>
-  "Successfully connected to your Git remote repository";
-export const GIT_CONNECT_SUCCESS_MESSAGE = () =>
-  "Now you can start collaborating with your team members by committing, merging and deploying your app";
-export const START_USING_GIT = () => "Start using Git";
-export const OPEN_GIT_SETTINGS = () => "Open Git settings";
 export const GIT_AUTHOR = () => "Git author";
 export const DISCONNECT_GIT = () => "Disconnect Git";
 export const DISCONNECT_GIT_MESSAGE = () =>
@@ -1088,19 +1108,6 @@ export const DEFAULT_BRANCH_DESC = () =>
 export const BRANCH_PROTECTION = () => "Branch protection";
 export const BRANCH_PROTECTION_DESC = () =>
   "Protected branches enable you to enforce Git workflows. Changes to the app are not allowed in the protected branches.";
-export const BRANCH_PROTECTION_RULES_AS_FOLLOWS = () =>
-  "Branch protection rules follow as,";
-export const BRANCH_PROTECTION_RULE_1 = () =>
-  "Commit and merge are not allowed.";
-export const BRANCH_PROTECTION_RULE_2 = () =>
-  "Users can’t create or edit queries, widgets, and JS Objects.";
-export const BRANCH_PROTECTION_RULE_3 = () =>
-  "You can still pull the latest changes and create new branches to edit the app.";
-export const BRANCH_PROTECTION_CHANGE_RULE = () =>
-  "You can remove protection on your default branch in Git settings.";
-export const BRANCH_TOOLTIP_TITLE = () => "🚫 This is a protected branch";
-export const BRANCH_TOOLTIP_MESSAGE = () =>
-  "Please create a new branch or checkout an existing one to edit the app.";
 export const GO_TO_SETTINGS = () => "Go to settings";
 export const NOW_PROTECT_BRANCH = () =>
   "You can now protect your default branch.";
@@ -1110,7 +1117,41 @@ export const UPDATE_DEFAULT_BRANCH_SUCCESS = (branchName: string) =>
   `Updated default branch ${!!branchName ? `to ${branchName}` : ""}`;
 export const CONTACT_ADMIN_FOR_GIT = () =>
   "Please contact your workspace admin to connect your app to a git repo";
+export const BRANCH_PROTECTION_CALLOUT_MSG = () =>
+  "The branch is protected; please switch to or create a new branch to edit the app.";
+export const BRANCH_PROTECTION_CALLOUT_CREATE_BRANCH = () =>
+  "Create new branch";
+export const BRANCH_PROTECTION_CALLOUT_UNPROTECT = () => "Unprotect branch";
+export const BRANCH_PROTECTION_CALLOUT_UNPROTECT_LOADING = () =>
+  "Unprotecting branch ...";
+export const BRANCH_PROTECTION_PROTECTED = () => "Protected";
 // Git Branch Protection end
+
+// Git Connection Success
+export const GIT_CONNECT_SUCCESS_TITLE = () => "Successfully connected to Git";
+export const GIT_CONNECT_SUCCESS_MESSAGE = () =>
+  "Now you can start collaborating with your team members by committing, merging and deploying your app";
+export const GIT_CONNECT_SUCCESS_ACTION_CONTINUE = () =>
+  "Continue to edit application";
+export const GIT_CONNECT_SUCCESS_ACTION_SETTINGS = () => "Protect your branch";
+export const GIT_CONNECT_SUCCESS_PROTECTION_MSG = () =>
+  "We recommend protecting your default branch to have a seamless collaboration.";
+export const GIT_CONNECT_SUCCESS_REPO_NAME = () => "Repository name";
+export const GIT_CONNECT_SUCCESS_DEFAULT_BRANCH = () => "Default branch";
+export const GIT_CONNECT_SUCCESS_DEFAULT_BRANCH_TOOLTIP = () =>
+  "This is the base branch of the app. Users launching the app from the dashboard will see the deployed version from this branch.";
+export const GIT_CONNECT_SUCCESS_PROTECTION_DOC_CTA = () =>
+  "Learn more about branch protection";
+// Git Connection Success end
+
+export const GENERAL = () => "General";
+export const BRANCH = () => "Branch";
+
+export const CONTINUOUS_DELIVERY = () => "Continuous delivery";
+export const CONFIGURE_CD_TITLE = () => "Configure continuous delivery";
+export const CONFIGURE_CD_DESC = () =>
+  "To automatically trigger a pull when changes occur on the remote branch, consider upgrading to our enterprise plan for enhanced functionality";
+export const TRY_APPSMITH_ENTERPRISE = () => "Try Appsmith Enterprise";
 
 export const NAV_DESCRIPTION = () =>
   `Navigate to any page, widget or file across this project.`;
@@ -1374,6 +1415,7 @@ export const SETTINGS_TOOLTIP = () => "Settings";
 
 //settings
 export const ADMIN_SETTINGS = () => "Admin settings";
+export const HELP = () => "Help";
 export const RESTART_BANNER_BODY = () =>
   "Hang in there. This should be done soon.";
 export const RESTART_BANNER_HEADER = () => "Restarting your server";
@@ -1413,7 +1455,7 @@ export const ENTERPRISE_TAG = () => "Enterprise";
 // Upgrade pages begin
 export const AVAILABLE_ON_BUSINESS = () => "Available on a business plan only";
 export const EXCLUSIVE_TO_BUSINESS = (featureName: string) =>
-  `The ${featureName} feature is exclusive to workspaces on the Business Edition`;
+  `The ${featureName} feature is exclusive to workspaces on the business plan`;
 export const AVAILABLE_ON_ENTERPRISE = () => "Available on Appsmith Enterprise";
 // Upgrade pages end
 
@@ -1458,7 +1500,7 @@ export const RESTRICT_PUBLIC_EXPOSURE = () =>
 export const RESTRICT_PUBLIC_EXPOSURE_DETAIL1 = () =>
   "Proactively disallow groups of non-admin or non-super-admin users from publicly sharing your app or exporting app data out of your environment, domain, and security perimeters.";
 export const ACCESS_CONTROL_UPGRADE_PAGE_FOOTER = () =>
-  "Unlock granular access controls along with audit logs and SSO for enhanced security and reliability with an upgrade to our Business edition.";
+  "Unlock granular access controls along with audit logs and SSO for enhanced security and reliability with an upgrade to our Business plan.";
 // Access control upgrade page end
 
 // Provisioning upgrade page begin
@@ -1508,6 +1550,7 @@ export const QUERY_CONFIRMATION_MODAL_MESSAGE = () =>
 export const ENTITY_EXPLORER_TITLE = () => "NAVIGATION";
 export const MULTI_SELECT_PROPERTY_PANE_MESSAGE = () =>
   `Select a widget to see it's properties`;
+export const WIDGET_MULTI_SELECT = () => "Multiple selected";
 export const WIDGET_DEPRECATION_MESSAGE = (widgetName: string) =>
   `Drag the latest ${widgetName} to unlock new features and prevent end-of-life headaches for this widget.`;
 
@@ -1573,7 +1616,7 @@ export const DISCONNECT_CONFIRMATION = () => "Are you sure?";
 export const ADMIN_BRANDING_SETTINGS_TITLE_UPGRADE = () =>
   "Custom Branding for your workspaces";
 export const ADMIN_BRANDING_SETTINGS_SUBTITLE_UPGRADE = () =>
-  "Make your workspaces and apps look more yours in a few clicks as in the example below. Upload your logo and favicon, set your primary color, and preview the new look. To save a look you like, upgrade to our Business Edition.";
+  "Make your workspaces and apps look more yours in a few clicks as in the example below. Upload your logo and favicon, set your primary color, and preview the new look. To save a look you like, upgrade to our Business plan.";
 export const ADMIN_BRANDING_COLOR_TOOLTIP = () =>
   `When you choose a primary color, we auto-magically fill in the secondary and accent colors. You can change them to get the look you want.`;
 export const ADMIN_BRANDING_LOGO_SIZE_ERROR = () =>
@@ -1648,12 +1691,9 @@ export const CONTINUE = () => "Continue";
 export const PROCEED_TO_NEXT_STEP = () => "Proceed to next step";
 export const PROCEED = () => "Proceed";
 export const COMPLETE = () => "Complete";
-// -- Modal --
-export const DEVIATION = () => "You are deviating from the tutorial";
-export const END_CONFIRMATION = () => "Are you sure you want to end?";
-export const CANCEL_DIALOG = () => "Cancel";
 // -- End Tutorial --
 export const END_TUTORIAL = () => "End tutorial";
+export const CANCEL_DIALOG = () => "Cancel";
 // -- Intro content --
 export const TITLE = () =>
   "In this tutorial we’ll build a tool to display customer information";
@@ -1731,9 +1771,6 @@ export const WIDGET_USED = () => "Widgets";
 export const SIMILAR_TEMPLATES = () => "Similar templates";
 export const VIEW_ALL_TEMPLATES = () => "View all templates";
 export const FILTERS = () => "Filters";
-export const TEMPLATE_CARD_TITLE = () => "Start from a template";
-export const TEMPLATE_CARD_DESCRIPTION = () =>
-  "Create app from template by selecting pages";
 export const FILTER_SELECTALL = () => "Select all";
 export const FILTER_SELECT_PAGE = () => "Add selected page";
 export const FILTER_SELECT_PAGES = () => "Add selected pages";
@@ -1786,9 +1823,6 @@ export const SEARCH_USERS = (
 
 export const CREATE_PAGE = () => "New blank page";
 export const CANVAS_NEW_PAGE_CARD = () => "Create new page";
-export const GENERATE_PAGE = () => "Generate page from data table";
-export const GENERATE_PAGE_DESCRIPTION = () =>
-  "Start app with a simple CRUD UI and customize it";
 export const ADD_PAGE_FROM_TEMPLATE = () => "Add page from template";
 export const INVALID_URL = () =>
   "Please enter a valid URL, for example, https://example.com";
@@ -1800,8 +1834,7 @@ export const APP_SETTINGS_CLOSE_TOOLTIP = () => "Close settings panel";
 
 export const GENERAL_SETTINGS_SECTION_HEADER = () => "General";
 export const GENERAL_SETTINGS_SECTION_CONTENT_HEADER = () => "General settings";
-export const GENERAL_SETTINGS_SECTION_HEADER_DESC = () =>
-  "App name, icon and share";
+export const GENERAL_SETTINGS_SECTION_HEADER_DESC = () => "App name and icon";
 export const GENERAL_SETTINGS_APP_NAME_LABEL = () => "App name";
 export const GENERAL_SETTINGS_NAME_EMPTY_MESSAGE = () =>
   "App name cannot be empty";
@@ -1825,7 +1858,7 @@ export const PAGE_SETTINGS_PAGE_URL_LABEL = () => "Change page URL";
 export const PAGE_SETTINGS_PAGE_URL_VERSION_UPDATE_1 = () => "Please";
 export const PAGE_SETTINGS_PAGE_URL_VERSION_UPDATE_2 = () => "update";
 export const PAGE_SETTINGS_PAGE_URL_VERSION_UPDATE_3 = () =>
-  "your app URL to new readable format to change this";
+  "your app URL to the new format to set the page URL.";
 export const PAGE_SETTINGS_SHOW_PAGE_NAV = () => "Show page navigation";
 export const PAGE_SETTINGS_SHOW_PAGE_NAV_TOOLTIP = () =>
   "Show or hide the page in the appsmith navbar in view mode";
@@ -1884,23 +1917,23 @@ export const IN_APP_EMBED_SETTING = {
   forkLabelTooltip: () =>
     "Forking allows developers to copy your app to their workspace",
   upgradeHeading: () =>
-    "Embedding in public mode is supported in the community edition. To make your app public, please contact your administrator.",
+    "Embedding in public mode is supported in the free plan. To make your app public, please contact your administrator.",
   upgradeHeadingForInviteModal: () => "Public apps",
   upgradeSubheadingForInviteModal: () =>
     "Make your app public by visiting the share settings, and easily embed your Appsmith app into legacy applications",
   privateAppsText: () => "Private apps",
   rampSubtextModal: () =>
-    "Embed private Appsmith apps and seamlessly authenticate users through SSO in our Business Edition",
+    "Embed private Appsmith apps and seamlessly authenticate users through SSO in our Enterprise Plan",
   rampSubtextSidebar: () =>
     "To embed private Appsmith apps and seamlessly authenticate users through SSO, try our ",
-  rampLinktext: () => "Try Business",
-  rampLinktextvariant2: () => "Business Edition",
+  rampLinktext: () => "Try Enterprise",
+  rampLinktextvariant2: () => "Enterprise Plan",
   upgradeContent: () => "Private embedding is now available in",
-  appsmithBusinessEdition: () => "Appsmith Business Edition.",
+  appsmithEnterpriseEdition: () => "Appsmith Enterprise Plan.",
   secondaryHeadingForAppSettings: () =>
     "Make your app public to embed your Appsmith app into legacy applications",
   secondaryHeading: () =>
-    "Embedding in public mode is supported in the community edition. To make your app public, please contact your administrator.",
+    "Embedding in public mode is supported in the free plan. To make your app public, please contact your administrator.",
 };
 
 export const APP_NAVIGATION_SETTING = {
@@ -1929,6 +1962,7 @@ export const CLOSE_SIDEBAR_MESSAGE = () => `Close sidebar`;
 // Datasource/New query
 export const NEW_QUERY_BUTTON_TEXT = () => "New query";
 export const NEW_API_BUTTON_TEXT = () => "New API";
+export const NEW_AI_BUTTON_TEXT = () => "New AI Query";
 export const GENERATE_NEW_PAGE_BUTTON_TEXT = () => "Generate new page";
 export const RECONNECT_BUTTON_TEXT = () => "Reconnect";
 export const SAVE_BUTTON_TEXT = () => "Save";
@@ -2067,9 +2101,9 @@ export const customJSLibraryMessages = {
     `Name collision detected: ${accessors}`,
 };
 
-// Business Edition upgrade page
+// Business Plan upgrade page
 export const MOVE_TO_BUSINESS_EDITION = (trailingChar: string) =>
-  `Move to Business edition${trailingChar ? trailingChar : ""}`;
+  `Move to Business plan${trailingChar ? trailingChar : ""}`;
 
 //Datasource environment
 export const START_SWITCH_ENVIRONMENT = (environment: string) =>
@@ -2215,6 +2249,7 @@ export const COMMUNITY_TEMPLATES = {
 export const EMPTY_TABLE_TITLE_TEXT = () => "Empty table";
 export const EMPTY_TABLE_MESSAGE_TEXT = () =>
   "There are no data records to show";
+export const NO_COLUMNS_MESSAGE_TEXT = () => "There are no columns to show";
 export const LOADING_RECORDS_TITLE_TEXT = () => "Loading records";
 export const LOADING_RECORDS_MESSAGE_TEXT = () => "This may take a few seconds";
 export const FAILED_RECORDS_TITLE_TEXT = () => "Failed to load";
@@ -2225,36 +2260,6 @@ export const DATA_PANE_TITLE = () => "Datasources in your workspace";
 export const DATASOURCE_LIST_BLANK_DESCRIPTION = () =>
   "Connect a datasource to write your first query";
 export const DATASOURCE_BLANK_STATE_MESSAGE = () => "No datasources to display";
-
-export const STARTER_TEMPLATE_PAGE_LAYOUTS = {
-  header: () => "Choose a template",
-  layouts: {
-    dashboard: {
-      name: () => "Visualize your data",
-      description: () => "Use to see your data in charts",
-    },
-    form: {
-      name: () => "Form",
-      description: () => "Add records to a database with a form",
-    },
-    recordEdit: {
-      name: () => "Change your data",
-      description: () => "Use to add or edit records via forms",
-    },
-    recordDetails: {
-      name: () => "View your data",
-      description: () => "Use to view fields for your records",
-    },
-  },
-  datasourceConnectPrompt: {
-    header: () => "Bring your data in!",
-    buttonText: () => "Connect your datasource",
-  },
-  or: () => "or",
-  dragAndDrop: () => "Drag and Drop Widgets",
-  importLoadingText: () => "Importing template",
-  seeMoreText: () => "See more",
-};
 
 // Create New Apps Intermediary step
 export const CREATE_NEW_APPS_STEP_TITLE = () => "How would you like to start?";
@@ -2276,7 +2281,7 @@ export const START_WITH_TEMPLATE_CONNECT_HEADING = () => "Select a template";
 export const START_WITH_TEMPLATE_CONNECT_SUBHEADING = () =>
   "Choose an option below to embark on your app-building adventure!";
 
-export const PAGES_PANE_TEXTS = {
+export const EDITOR_PANE_TEXTS = {
   queries_tab: () => "Queries",
   js_tab: () => "JS",
   ui_tab: () => "UI",
@@ -2287,14 +2292,17 @@ export const PAGES_PANE_TEXTS = {
   js_blank_state_description: () =>
     "Use JS to transform your data or write business logic",
   widget_blank_state_description: () =>
-    "Drag & drop widgets to create your app",
+    "Drag & drop UI elements to create your app",
   query_add_button: () => "New query / API",
-  js_add_button: () => "New JS Object",
-  widget_add_button: () => "New Widget",
-  query_create_tab_title: () => "Create new query / API",
-  widgets_create_tab_title: () => "Drag & drop a widget",
+  js_add_button: () => "New JS object",
+  js_blank_object_item: () => "Blank JS object",
+  widget_add_button: () => "New UI element",
+  query_create_tab_title: () => "Create new query from",
+  widgets_create_tab_title: () => "Drag & drop UI elements",
+  js_create_tab_title: () => "Create JS object from",
   queries_create_from_existing: () => "From existing datasource",
   queries_create_new: () => "New API",
+  loading_building_blocks: () => "Loading building blocks",
 };
 
 export const PARTIAL_IMPORT_EXPORT = {
@@ -2340,9 +2348,10 @@ export const CUSTOM_WIDGET_FEATURE = {
       "Connection lost because the custom widget was deselected. Please reselect this widget to continue editing.",
     editor: {
       css: {
-        contextTooltip: () => "You can use following css variables",
+        contextTooltipScss: () => "Supports SCSS syntax.",
+        contextTooltipVariables: () => "You can use following css variables.",
         placeholder: () =>
-          "/* you can access your string properties of your model using `var(--appsmith-model-<property-name>)`*/",
+          "/* you can access string and number properties of your model using `var(--appsmith-model-<property-name>)`*/",
       },
       html: {
         placeholder: () =>
@@ -2356,6 +2365,7 @@ export const CUSTOM_WIDGET_FEATURE = {
   },
   templateKey: {
     blank: () => "Blank",
+    vanillaJs: () => "Vanilla JS",
     react: () => "React",
     vue: () => "Vue",
   },
@@ -2375,7 +2385,7 @@ export const CUSTOM_WIDGET_FEATURE = {
     split: () => "Splits",
   },
   referrences: {
-    title: () => "Referrences",
+    title: () => "References",
     tooltip: {
       open: () => "Open references",
       close: () => "Close references",
@@ -2411,6 +2421,8 @@ export const CUSTOM_WIDGET_FEATURE = {
     helpDropdown: {
       stackoverflow: () => "Search StackOverflow",
     },
+    noOnReadyWarning: (url: string) =>
+      `Missing appsmith.onReady() function call. Initiate your component inside 'appsmith.onReady()' for your custom widget to work as expected. For more information - ${url}`,
   },
   preview: {
     eventFired: () => "Event fired:",
@@ -2419,7 +2431,9 @@ export const CUSTOM_WIDGET_FEATURE = {
 };
 
 export const WIDGET_PANEL_EMPTY_MESSAGE = () =>
-  "We couldn’t find any widgets called";
+  "We couldn’t find any UI elements called";
+
+export const UI_ELEMENT_PANEL_SEARCH_TEXT = () => "Search UI elements";
 
 export const HTTP_PROTOCOL_INPUT_PLACEHOLDER = () => `Select HTTP Protocol`;
 
@@ -2427,3 +2441,43 @@ export const ADD_PAGE_FROM_TEMPLATE_MODAL = {
   title: () => "Add page(s) from a template",
   buildingBlocksTitle: () => "Building Blocks",
 };
+
+export const HEADER_TITLES = {
+  DATA: () => "Data",
+  EDITOR: () => "Pages",
+  SETTINGS: () => "Settings",
+  LIBRARIES: () => "Libraries",
+};
+
+export const PASTE_FAILED = (str: string): string => `Paste failed! ${str}`;
+
+export const CREATE_A_NEW_ITEM = (item: string) => `Create a new ${item}`;
+
+export const MAXIMIZE_BUTTON_TOOLTIP = () =>
+  `Expand code editor to full-screen`;
+export const MINIMIZE_BUTTON_TOOLTIP = () => `Open code editor next to the UI`;
+export const SPLITPANE_ANNOUNCEMENT = {
+  TITLE: () => "Code and UI, side-by-side",
+  DESCRIPTION: () =>
+    "Write queries and JS functions while you refer to the UI on the side! This is a beta version that we will continue to improve with your feedback.",
+};
+
+export const CANVAS_VIEW_MODE_TOOLTIP = (shortcutKey: string) =>
+  `💡 ${shortcutKey} click a widget to navigate to UI mode.`;
+
+export const EMPTY_CANVAS_HINTS = {
+  DRAG_DROP_WIDGET_HINT: () => "Drag and drop a widget here",
+  DRAG_DROP_BUILDING_BLOCK_HINT: {
+    TITLE: () => "Drag & drop a building block",
+    DESCRIPTION: () => "Make a working app in seconds using functional blocks",
+  },
+};
+
+export const BETA_TAG = () => `Beta`;
+
+export const BUTTON_WIDGET_DEFAULT_LABEL = () => "Do something";
+
+export const PAGE_ENTITY_NAME = "Page";
+
+export const EMPTY_DATASOURCE_TOOLTIP_SIDEBUTTON = () =>
+  "Create a datasource to power your app with data.";

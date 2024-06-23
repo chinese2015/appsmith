@@ -11,9 +11,8 @@ import {
 import type {
   ClonePageActionPayload,
   CreatePageActionPayload,
-  FetchPageListPayload,
 } from "actions/pageActions";
-import { createPage } from "actions/pageActions";
+import { createPage, fetchPublishedPage } from "actions/pageActions";
 import {
   clonePageSuccess,
   deletePageSuccess,
@@ -38,9 +37,9 @@ import type {
   ClonePageRequest,
   CreatePageRequest,
   DeletePageRequest,
-  FetchPageListResponse,
   FetchPageRequest,
   FetchPageResponse,
+  FetchPageResponseData,
   FetchPublishedPageRequest,
   GenerateTemplatePageRequest,
   PageLayout,
@@ -59,7 +58,7 @@ import type {
   CanvasWidgetsReduxState,
   FlattenedWidgetProps,
 } from "reducers/entityReducers/canvasWidgetsReducer";
-import { all, call, delay, put, select } from "redux-saga/effects";
+import { all, call, delay, put, select, take } from "redux-saga/effects";
 import history from "utils/history";
 import { isNameValid } from "utils/helpers";
 import { extractCurrentDSL } from "utils/WidgetPropsUtils";
@@ -68,11 +67,8 @@ import {
   getDefaultPageId,
   getEditorConfigs,
   getWidgets,
-} from "../../sagas/selectors";
-import {
-  IncorrectBindingError,
-  validateResponse,
-} from "../../sagas/ErrorSagas";
+} from "sagas/selectors";
+import { IncorrectBindingError, validateResponse } from "sagas/ErrorSagas";
 import type { ApiResponse } from "api/ApiResponses";
 import {
   combinedPreviewModeSelector,
@@ -102,13 +98,12 @@ import log from "loglevel";
 import { migrateIncorrectDynamicBindingPathLists } from "utils/migrations/IncorrectDynamicBindingPathLists";
 import * as Sentry from "@sentry/react";
 import { ERROR_CODES } from "@appsmith/constants/ApiConstants";
-import AnalyticsUtil from "utils/AnalyticsUtil";
+import AnalyticsUtil from "@appsmith/utils/AnalyticsUtil";
 import DEFAULT_TEMPLATE from "templates/default";
 
 import { getAppMode } from "@appsmith/selectors/applicationSelectors";
 import { setCrudInfoModalData } from "actions/crudInfoModalActions";
 import { selectWidgetInitAction } from "actions/widgetSelectionActions";
-import { inGuidedTour } from "selectors/onboardingSelectors";
 import {
   fetchJSCollectionsForPage,
   fetchJSCollectionsForPageError,
@@ -116,14 +111,13 @@ import {
 } from "actions/jsActionActions";
 
 import WidgetFactory from "WidgetProvider/factory";
-import { toggleShowDeviationDialog } from "actions/onboardingActions";
 import { builderURL } from "@appsmith/RouteBuilder";
+import { failFastApiCalls, waitForWidgetConfigBuild } from "sagas/InitSagas";
+import { resizePublishedMainCanvasToLowestWidget } from "sagas/WidgetOperationUtils";
 import {
-  failFastApiCalls,
-  waitForWidgetConfigBuild,
-} from "../../sagas/InitSagas";
-import { resizePublishedMainCanvasToLowestWidget } from "../../sagas/WidgetOperationUtils";
-import { checkAndLogErrorsIfCyclicDependency } from "../../sagas/helper";
+  checkAndLogErrorsIfCyclicDependency,
+  getFromServerWhenNoPrefetchedResult,
+} from "sagas/helper";
 import { LOCAL_STORAGE_KEYS } from "utils/localStorage";
 import { generateAutoHeightLayoutTreeAction } from "actions/autoHeightActions";
 import { getUsedActionNames } from "selectors/actionSelectors";
@@ -133,8 +127,7 @@ import { SelectionRequestType } from "sagas/WidgetSelectUtils";
 import { toast } from "design-system";
 import { getCurrentGitBranch } from "selectors/gitSyncSelectors";
 import type { MainCanvasReduxState } from "reducers/uiReducers/mainCanvasReducer";
-import { UserCancelledActionExecutionError } from "../../sagas/ActionExecution/errorUtils";
-import { getCurrentWorkspaceId } from "@appsmith/selectors/workspaceSelectors";
+import { UserCancelledActionExecutionError } from "sagas/ActionExecution/errorUtils";
 import { getInstanceId } from "@appsmith/selectors/tenantSelectors";
 import { MAIN_CONTAINER_WIDGET_ID } from "constants/WidgetConstants";
 import type { WidgetProps } from "widgets/BaseWidget";
@@ -144,11 +137,13 @@ import { selectFeatureFlags } from "@appsmith/selectors/featureFlagsSelectors";
 import { isGACEnabled } from "@appsmith/utils/planHelpers";
 import { getHasManagePagePermission } from "@appsmith/utils/BusinessFeatures/permissionPageHelpers";
 import { getLayoutSystemType } from "selectors/layoutSystemSelectors";
-import { LayoutSystemTypes } from "layoutSystems/types";
 import { getLayoutSystemDSLTransformer } from "layoutSystems/common/utils/LayoutSystemDSLTransformer";
 import type { DSLWidget } from "WidgetProvider/constants";
 import type { FeatureFlags } from "@appsmith/entities/FeatureFlag";
-import { getIsServerDSLMigrationsEnabled } from "selectors/pageSelectors";
+import { getCurrentWorkspaceId } from "@appsmith/selectors/selectedWorkspaceSelectors";
+import { ActionExecutionContext } from "entities/Action";
+import type { LayoutSystemTypes } from "layoutSystems/types";
+import { getIsAnvilLayout } from "layoutSystems/anvil/integrations/selectors";
 
 export const checkIfMigrationIsNeeded = (
   fetchPageResponse?: FetchPageResponse,
@@ -162,82 +157,6 @@ export const WidgetTypes = WidgetFactory.widgetTypes;
 
 export const getWidgetName = (state: AppState, widgetId: string) =>
   state.entities.canvasWidgets[widgetId];
-
-export function* fetchPageListSaga(
-  fetchPageListAction: ReduxAction<FetchPageListPayload>,
-) {
-  PerformanceTracker.startAsyncTracking(
-    PerformanceTransactionName.FETCH_PAGE_LIST_API,
-  );
-  try {
-    const { applicationId, mode } = fetchPageListAction.payload;
-    const apiCall =
-      mode === APP_MODE.EDIT
-        ? PageApi.fetchPageList
-        : PageApi.fetchPageListViewMode;
-    const response: FetchPageListResponse = yield call(apiCall, applicationId);
-    const isValidResponse: boolean = yield validateResponse(response);
-    const prevPagesState: Page[] = yield select(getPageList);
-    const pagePermissionsMap = prevPagesState.reduce(
-      (acc, page) => {
-        acc[page.pageId] = page.userPermissions ?? [];
-        return acc;
-      },
-      {} as Record<string, string[]>,
-    );
-    if (isValidResponse) {
-      const workspaceId = response.data.workspaceId;
-      const pages: Page[] = response.data.pages.map((page) => ({
-        pageName: page.name,
-        description: page.description,
-        pageId: page.id,
-        isDefault: page.isDefault,
-        isHidden: !!page.isHidden,
-        slug: page.slug,
-        userPermissions: page.userPermissions
-          ? page.userPermissions
-          : pagePermissionsMap[page.id],
-      }));
-      yield put({
-        type: ReduxActionTypes.SET_CURRENT_WORKSPACE_ID,
-        payload: {
-          workspaceId,
-        },
-      });
-      yield put({
-        type: ReduxActionTypes.FETCH_PAGE_LIST_SUCCESS,
-        payload: {
-          pages,
-          applicationId: applicationId,
-        },
-      });
-      PerformanceTracker.stopAsyncTracking(
-        PerformanceTransactionName.FETCH_PAGE_LIST_API,
-      );
-    } else {
-      PerformanceTracker.stopAsyncTracking(
-        PerformanceTransactionName.FETCH_PAGE_LIST_API,
-      );
-      yield put({
-        type: ReduxActionErrorTypes.FETCH_PAGE_LIST_ERROR,
-        payload: {
-          error: response.responseMeta.error,
-        },
-      });
-    }
-  } catch (error) {
-    PerformanceTracker.stopAsyncTracking(
-      PerformanceTransactionName.FETCH_PAGE_LIST_API,
-      { failed: true },
-    );
-    yield put({
-      type: ReduxActionErrorTypes.FETCH_PAGE_LIST_ERROR,
-      payload: {
-        error,
-      },
-    });
-  }
-}
 
 //Method to load the default page if current page is not found
 export function* refreshTheApp() {
@@ -269,12 +188,10 @@ export function* refreshTheApp() {
 export const getCanvasWidgetsPayload = (
   pageResponse: FetchPageResponse,
   dslTransformer?: (dsl: DSLWidget) => DSLWidget,
-  migrateDSLLocally: boolean = true,
 ): UpdateCanvasPayload => {
   const extractedDSL = extractCurrentDSL({
     dslTransformer,
     response: pageResponse,
-    migrateDSLLocally,
   }).dsl;
   const flattenedDSL = flattenDSL(extractedDSL);
   const pageWidgetId = MAIN_CONTAINER_WIDGET_ID;
@@ -302,6 +219,7 @@ export function* handleFetchedPage({
   isFirstLoad?: boolean;
 }) {
   const layoutSystemType: LayoutSystemTypes = yield select(getLayoutSystemType);
+  const isAnvilLayout: boolean = yield select(getIsAnvilLayout);
   const mainCanvasProps: MainCanvasReduxState =
     yield select(getMainCanvasProps);
   const dslTransformer = getLayoutSystemDSLTransformer(
@@ -322,13 +240,9 @@ export function* handleFetchedPage({
     // Wait for widget config to be loaded before we can generate the canvas payload
     yield call(waitForWidgetConfigBuild);
     // Get Canvas payload
-    const isServerDSLMigrationsEnabled: boolean = yield select(
-      getIsServerDSLMigrationsEnabled,
-    );
     const canvasWidgetsPayload = getCanvasWidgetsPayload(
       fetchPageResponse,
       dslTransformer,
-      !isServerDSLMigrationsEnabled,
     );
     // Update the canvas
     yield put(initCanvasLayout(canvasWidgetsPayload));
@@ -361,7 +275,7 @@ export function* handleFetchedPage({
     // If the type of the layoutSystem is ANVIL, then we need to save the layout
     // This is because we have updated the DSL
     // using the AnvilDSLTransformer when we called the getCanvasWidgetsPayload function
-    if (willPageBeMigrated || layoutSystemType === LayoutSystemTypes.ANVIL) {
+    if (willPageBeMigrated || isAnvilLayout) {
       yield put(saveLayout());
     }
   }
@@ -374,22 +288,17 @@ export function* fetchPageSaga(
   pageRequestAction: ReduxAction<FetchPageRequest>,
 ) {
   try {
-    const { id, isFirstLoad } = pageRequestAction.payload;
+    const { id, isFirstLoad, pageWithMigratedDsl } = pageRequestAction.payload;
     PerformanceTracker.startAsyncTracking(
       PerformanceTransactionName.FETCH_PAGE_API,
       { pageId: id },
     );
 
-    const isServerDSLMigrationsEnabled = select(
-      getIsServerDSLMigrationsEnabled,
-    );
-    const params: FetchPageRequest = { id };
-    if (isServerDSLMigrationsEnabled) {
-      params.migrateDSL = true;
-    }
+    const params: FetchPageRequest = { id, migrateDSL: true };
     const fetchPageResponse: FetchPageResponse = yield call(
-      PageApi.fetchPage,
-      params,
+      getFromServerWhenNoPrefetchedResult,
+      pageWithMigratedDsl,
+      () => call(PageApi.fetchPage, params),
     );
 
     yield handleFetchedPage({
@@ -423,10 +332,12 @@ export function* fetchPublishedPageSaga(
     pageId: string;
     bustCache: boolean;
     firstLoad: boolean;
+    pageWithMigratedDsl?: FetchPageResponse;
   }>,
 ) {
   try {
-    const { bustCache, firstLoad, pageId } = pageRequestAction.payload;
+    const { bustCache, firstLoad, pageId, pageWithMigratedDsl } =
+      pageRequestAction.payload;
     PerformanceTracker.startAsyncTracking(
       PerformanceTransactionName.FETCH_PAGE_API,
       {
@@ -438,10 +349,13 @@ export function* fetchPublishedPageSaga(
       pageId,
       bustCache,
     };
+
     const response: FetchPageResponse = yield call(
-      PageApi.fetchPublishedPage,
-      request,
+      getFromServerWhenNoPrefetchedResult,
+      pageWithMigratedDsl,
+      () => call(PageApi.fetchPublishedPage, request),
     );
+
     const isValidResponse: boolean = yield validateResponse(response);
     if (isValidResponse) {
       // Clear any existing caches
@@ -524,7 +438,6 @@ export function* savePageSaga(action: ReduxAction<{ isRetry?: boolean }>) {
 
   if (!editorConfigs) return;
 
-  const guidedTourEnabled: boolean = yield select(inGuidedTour);
   const savePageRequest: SavePageRequest = getLayoutSavePayload(
     widgets,
     editorConfigs,
@@ -570,7 +483,7 @@ export function* savePageSaga(action: ReduxAction<{ isRetry?: boolean }>) {
       const { actionUpdates, messages } = savePageResponse.data;
       // We do not want to show these toasts in guided tour
       // Show toast messages from the server
-      if (messages && messages.length && !guidedTourEnabled) {
+      if (messages && messages.length) {
         savePageResponse.data.messages.forEach((message) => {
           toast.show(message, {
             kind: "info",
@@ -753,8 +666,7 @@ export function* createNewPageFromEntity(
       },
     ];
 
-    const { applicationId, blockNavigation, name } =
-      createPageAction?.payload || {};
+    const { applicationId, name } = createPageAction?.payload || {};
 
     const workspaceId: string = yield select(getCurrentWorkspaceId);
     const instanceId: string | undefined = yield select(getInstanceId);
@@ -769,7 +681,6 @@ export function* createNewPageFromEntity(
         name,
         defaultPageLayouts,
         workspaceId,
-        blockNavigation,
         instanceId,
       ),
     );
@@ -786,7 +697,6 @@ export function* createPageSaga(
   createPageAction: ReduxAction<CreatePageActionPayload>,
 ) {
   try {
-    const guidedTourEnabled: boolean = yield select(inGuidedTour);
     const layoutSystemType: LayoutSystemTypes =
       yield select(getLayoutSystemType);
     const mainCanvasProps: MainCanvasReduxState =
@@ -796,11 +706,6 @@ export function* createPageSaga(
       mainCanvasProps.width,
     );
 
-    // Prevent user from creating a new page during the guided tour
-    if (guidedTourEnabled) {
-      yield put(toggleShowDeviationDialog(true));
-      return;
-    }
     const request: CreatePageRequest = createPageAction.payload;
     const response: FetchPageResponse = yield call(PageApi.createPage, request);
     const isValidResponse: boolean = yield validateResponse(response);
@@ -819,9 +724,6 @@ export function* createPageSaga(
       // Add this to the page DSLs for entity explorer
       // The dslTransformer may not be necessary for the entity explorer
       // However, we still transform for consistency.
-      const isServerDSLMigrationsEnabled: boolean = yield select(
-        getIsServerDSLMigrationsEnabled,
-      );
       yield put({
         type: ReduxActionTypes.FETCH_PAGE_DSL_SUCCESS,
         payload: {
@@ -829,20 +731,17 @@ export function* createPageSaga(
           dsl: extractCurrentDSL({
             dslTransformer,
             response,
-            migrateDSLLocally: !isServerDSLMigrationsEnabled,
           }).dsl,
           layoutId: response.data.layouts[0].id,
         },
       });
       // TODO: Update URL params here
       // route to generate template for new page created
-      if (!createPageAction.payload.blockNavigation) {
-        history.push(
-          builderURL({
-            pageId: response.data.id,
-          }),
-        );
-      }
+      history.push(
+        builderURL({
+          pageId: response.data.id,
+        }),
+      );
     }
   } catch (error) {
     yield put({
@@ -943,12 +842,8 @@ export function* clonePageSaga(
       // We're not sending the `dslTransformer` to the `extractCurrentDSL` function
       // as this is a clone operation, and any layout system specific
       // updates to the DSL would have already been performed in the original page
-      const isServerDSLMigrationsEnabled: boolean = yield select(
-        getIsServerDSLMigrationsEnabled,
-      );
       const { dsl, layoutId } = extractCurrentDSL({
         response,
-        migrateDSLLocally: !isServerDSLMigrationsEnabled,
       });
       yield put({
         type: ReduxActionTypes.FETCH_PAGE_DSL_SUCCESS,
@@ -981,7 +876,11 @@ export function* clonePageSaga(
       }
 
       yield put(selectWidgetInitAction(SelectionRequestType.Empty));
-      yield put(fetchAllPageEntityCompletion([executePageLoadActions()]));
+      yield put(
+        fetchAllPageEntityCompletion([
+          executePageLoadActions(ActionExecutionContext.CLONE_PAGE),
+        ]),
+      );
 
       // TODO: Update URL params here.
 
@@ -1188,7 +1087,10 @@ export function* setDataUrl() {
   yield put(setUrlData(urlData));
 }
 
-export function* fetchPageDSLSaga(pageId: string) {
+export function* fetchPageDSLSaga(
+  pageId: string,
+  pageDSL?: ApiResponse<FetchPageResponseData>,
+) {
   try {
     const layoutSystemType: LayoutSystemTypes =
       yield select(getLayoutSystemType);
@@ -1198,17 +1100,13 @@ export function* fetchPageDSLSaga(pageId: string) {
       layoutSystemType,
       mainCanvasProps.width,
     );
-    const isServerDSLMigrationsEnabled = select(
-      getIsServerDSLMigrationsEnabled,
-    );
-    const params: FetchPageRequest = { id: pageId };
-    if (isServerDSLMigrationsEnabled) {
-      params.migrateDSL = true;
-    }
+    const params: FetchPageRequest = { id: pageId, migrateDSL: true };
     const fetchPageResponse: FetchPageResponse = yield call(
-      PageApi.fetchPage,
-      params,
+      getFromServerWhenNoPrefetchedResult,
+      pageDSL,
+      () => call(PageApi.fetchPage, params),
     );
+
     const isValidResponse: boolean = yield validateResponse(fetchPageResponse);
     if (isValidResponse) {
       // Wait for the Widget config to be loaded before we can migrate the DSL
@@ -1223,7 +1121,6 @@ export function* fetchPageDSLSaga(pageId: string) {
       const { dsl, layoutId } = extractCurrentDSL({
         dslTransformer,
         response: fetchPageResponse,
-        migrateDSLLocally: !isServerDSLMigrationsEnabled,
       });
       return {
         pageId,
@@ -1248,14 +1145,25 @@ export function* fetchPageDSLSaga(pageId: string) {
   }
 }
 
-export function* populatePageDSLsSaga() {
+export function* populatePageDSLsSaga(action?: {
+  payload?: { pagesWithMigratedDsl?: ApiResponse<FetchPageResponseData[]> };
+}) {
+  const { pagesWithMigratedDsl } = action?.payload || {};
   try {
     const pageIds: string[] = yield select((state: AppState) =>
       state.entities.pageList.pages.map((page: Page) => page.pageId),
     );
     const pageDSLs: unknown = yield all(
       pageIds.map((pageId: string) => {
-        return call(fetchPageDSLSaga, pageId);
+        if (!pagesWithMigratedDsl) {
+          return call(fetchPageDSLSaga, pageId);
+        }
+        const { data } = pagesWithMigratedDsl;
+        const v1PageDSL = data?.find?.((v: any) => v?.id === pageId);
+        return call(fetchPageDSLSaga, pageId, {
+          ...pagesWithMigratedDsl,
+          data: v1PageDSL,
+        } as ApiResponse<FetchPageResponseData>);
       }),
     );
     yield put({
@@ -1362,7 +1270,11 @@ export function* generateTemplatePageSaga(
       if (!afterActionsFetch) {
         throw new Error("Failed generating template");
       }
-      yield put(fetchAllPageEntityCompletion([executePageLoadActions()]));
+      yield put(
+        fetchAllPageEntityCompletion([
+          executePageLoadActions(ActionExecutionContext.GENERATE_CRUD_PAGE),
+        ]),
+      );
 
       history.replace(
         builderURL({
@@ -1436,12 +1348,14 @@ export function* setPreviewModeInitSaga(action: ReduxAction<boolean>) {
 
 export function* setupPageSaga(action: ReduxAction<FetchPageRequest>) {
   try {
-    const { id, isFirstLoad } = action.payload;
+    const { id, isFirstLoad, pageWithMigratedDsl } = action.payload;
 
-    yield call(fetchPageSaga, {
-      type: ReduxActionTypes.FETCH_PAGE_INIT,
-      payload: { id, isFirstLoad },
-    });
+    /*
+      Added the first line for isPageSwitching redux state to be true when page is being fetched to fix scroll position issue.
+      Added the second line for sync call instead of async (due to first line) as it was leading to issue with on page load actions trigger.
+    */
+    yield put(fetchPage(id, isFirstLoad, pageWithMigratedDsl));
+    yield take(ReduxActionTypes.FETCH_PAGE_SUCCESS);
 
     yield put({
       type: ReduxActionTypes.SETUP_PAGE_SUCCESS,
@@ -1459,15 +1373,21 @@ export function* setupPublishedPageSaga(
     pageId: string;
     bustCache: boolean;
     firstLoad: boolean;
+    pageWithMigratedDsl?: FetchPageResponse;
   }>,
 ) {
   try {
-    const { bustCache, firstLoad, pageId } = action.payload;
+    const { bustCache, firstLoad, pageId, pageWithMigratedDsl } =
+      action.payload;
 
-    yield call(fetchPublishedPageSaga, {
-      type: ReduxActionTypes.FETCH_PUBLISHED_PAGE_INIT,
-      payload: { bustCache, firstLoad, pageId },
-    });
+    /*
+      Added the first line for isPageSwitching redux state to be true when page is being fetched to fix scroll position issue.
+      Added the second line for sync call instead of async (due to first line) as it was leading to issue with on page load actions trigger.
+    */
+    yield put(
+      fetchPublishedPage(pageId, bustCache, firstLoad, pageWithMigratedDsl),
+    );
+    yield take(ReduxActionTypes.FETCH_PUBLISHED_PAGE_SUCCESS);
 
     yield put({
       type: ReduxActionTypes.SETUP_PUBLISHED_PAGE_SUCCESS,

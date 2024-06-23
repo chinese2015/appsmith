@@ -1,6 +1,7 @@
 package com.appsmith.server.datasources.base;
 
 import com.appsmith.external.constants.AnalyticsEvents;
+import com.appsmith.external.enums.FeatureFlagEnum;
 import com.appsmith.external.models.Datasource;
 import com.appsmith.external.models.DatasourceConfiguration;
 import com.appsmith.external.models.DatasourceStorage;
@@ -9,7 +10,6 @@ import com.appsmith.external.models.DatasourceTestResult;
 import com.appsmith.external.models.MustacheBindingToken;
 import com.appsmith.external.models.PluginType;
 import com.appsmith.external.models.Policy;
-import com.appsmith.external.models.QDatasource;
 import com.appsmith.external.plugins.PluginExecutor;
 import com.appsmith.server.acl.AclPermission;
 import com.appsmith.server.acl.PolicyGenerator;
@@ -21,7 +21,6 @@ import com.appsmith.server.domains.User;
 import com.appsmith.server.domains.Workspace;
 import com.appsmith.server.exceptions.AppsmithError;
 import com.appsmith.server.exceptions.AppsmithException;
-import com.appsmith.server.featureflags.FeatureFlagEnum;
 import com.appsmith.server.helpers.PluginExecutorHelper;
 import com.appsmith.server.plugins.base.PluginService;
 import com.appsmith.server.ratelimiting.RateLimitService;
@@ -36,13 +35,14 @@ import com.appsmith.server.services.WorkspaceService;
 import com.appsmith.server.solutions.DatasourcePermission;
 import com.appsmith.server.solutions.EnvironmentPermission;
 import com.appsmith.server.solutions.WorkspacePermission;
+import io.micrometer.observation.ObservationRegistry;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import reactor.core.observability.micrometer.Micrometer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -57,14 +57,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import static com.appsmith.external.constants.spans.DatasourceSpan.FETCH_ALL_DATASOURCES_WITH_STORAGES;
+import static com.appsmith.external.constants.spans.DatasourceSpan.FETCH_ALL_PLUGINS_IN_WORKSPACE;
 import static com.appsmith.external.helpers.AppsmithBeanUtils.copyNestedNonNullProperties;
 import static com.appsmith.server.helpers.CollectionUtils.isNullOrEmpty;
 import static com.appsmith.server.helpers.DatasourceAnalyticsUtils.getAnalyticsProperties;
 import static com.appsmith.server.helpers.DatasourceAnalyticsUtils.getAnalyticsPropertiesForTestEventStatus;
-import static com.appsmith.server.repositories.BaseAppsmithRepositoryImpl.fieldName;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -89,6 +90,7 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
     private final EnvironmentPermission environmentPermission;
     private final RateLimitService rateLimitService;
     private final FeatureFlagService featureFlagService;
+    private final ObservationRegistry observationRegistry;
 
     // Defines blocking duration for test as well as connection created for query execution
     // This will block the creation of datasource connection for 5 minutes, in case of more than 3 failed connection
@@ -114,7 +116,8 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
             DatasourceStorageService datasourceStorageService,
             EnvironmentPermission environmentPermission,
             RateLimitService rateLimitService,
-            FeatureFlagService featureFlagService) {
+            FeatureFlagService featureFlagService,
+            ObservationRegistry observationRegistry) {
 
         this.workspaceService = workspaceService;
         this.sessionUserService = sessionUserService;
@@ -132,20 +135,21 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
         this.environmentPermission = environmentPermission;
         this.rateLimitService = rateLimitService;
         this.featureFlagService = featureFlagService;
+        this.observationRegistry = observationRegistry;
     }
 
     @Override
     public Mono<Datasource> create(Datasource datasource) {
-        return createEx(datasource, Optional.of(workspacePermission.getDatasourceCreatePermission()));
+        return createEx(datasource, workspacePermission.getDatasourceCreatePermission());
     }
 
     // TODO: Check usage
     @Override
     public Mono<Datasource> createWithoutPermissions(Datasource datasource) {
-        return createEx(datasource, Optional.empty());
+        return createEx(datasource, null);
     }
 
-    private Mono<Datasource> createEx(@NotNull Datasource datasource, Optional<AclPermission> permission) {
+    private Mono<Datasource> createEx(@NotNull Datasource datasource, AclPermission permission) {
         // Validate incoming request
         String workspaceId = datasource.getWorkspaceId();
         if (!hasText(workspaceId)) {
@@ -155,7 +159,7 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
             return Mono.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, FieldName.PLUGIN_ID));
         }
         if (!hasText(datasource.getGitSyncId())) {
-            datasource.setGitSyncId(datasource.getWorkspaceId() + "_" + new ObjectId());
+            datasource.setGitSyncId(datasource.getWorkspaceId() + "_" + UUID.randomUUID());
         }
 
         if (isNullOrEmpty(datasource.getDatasourceStorages())) {
@@ -258,7 +262,7 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
     }
 
     private Mono<Datasource> generateAndSetDatasourcePolicies(
-            Mono<User> userMono, Datasource datasource, Optional<AclPermission> permission) {
+            Mono<User> userMono, Datasource datasource, AclPermission permission) {
         return userMono.flatMap(user -> {
             Mono<Workspace> workspaceMono = workspaceService
                     .findById(datasource.getWorkspaceId(), permission)
@@ -676,8 +680,7 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
     }
 
     @Override
-    public Mono<Datasource> findByNameAndWorkspaceId(
-            String name, String workspaceId, Optional<AclPermission> permission) {
+    public Mono<Datasource> findByNameAndWorkspaceId(String name, String workspaceId, AclPermission permission) {
         return repository.findByNameAndWorkspaceId(name, workspaceId, permission);
     }
 
@@ -759,30 +762,29 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
 
     @Override
     public Flux<Datasource> getAllWithStorages(MultiValueMap<String, String> params) {
-        String workspaceId = params.getFirst(fieldName(QDatasource.datasource.workspaceId));
+        String workspaceId = params.getFirst(Datasource.Fields.workspaceId);
         if (workspaceId != null) {
-            return this.getAllByWorkspaceIdWithStorages(
-                    workspaceId, Optional.of(datasourcePermission.getReadPermission()));
+            return this.getAllByWorkspaceIdWithStorages(workspaceId, datasourcePermission.getReadPermission());
         }
 
         return Flux.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, FieldName.WORKSPACE_ID));
     }
 
     @Override
-    public Flux<Datasource> getAllByWorkspaceIdWithoutStorages(String workspaceId, Optional<AclPermission> permission) {
-        return repository.findAllByWorkspaceId(workspaceId, permission);
-    }
+    public Flux<Datasource> getAllByWorkspaceIdWithStorages(String workspaceId, AclPermission permission) {
+        Mono<Map<String, Plugin>> pluginsMapMono = pluginService
+                .findAllPluginsInWorkspace(workspaceId)
+                .name(FETCH_ALL_PLUGINS_IN_WORKSPACE)
+                .tap(Micrometer.observation(observationRegistry));
 
-    @Override
-    public Flux<Datasource> getAllByWorkspaceIdWithStorages(String workspaceId, Optional<AclPermission> permission) {
-
-        return repository
+        return pluginsMapMono.flatMapMany(pluginsMap -> repository
                 .findAllByWorkspaceId(workspaceId, permission)
                 .publishOn(Schedulers.boundedElastic())
                 .flatMap(datasource -> datasourceStorageService
                         .findByDatasource(datasource)
                         .publishOn(Schedulers.boundedElastic())
-                        .flatMap(datasourceStorageService::populateHintMessages)
+                        .flatMap(datasourceStorage ->
+                                datasourceStorageService.populateHintMessages(datasourceStorage, pluginsMap))
                         .map(datasourceStorageService::createDatasourceStorageDTOFromDatasourceStorage)
                         .collectMap(DatasourceStorageDTO::getEnvironmentId)
                         .flatMap(datasourceStorages -> {
@@ -790,10 +792,12 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
                             return Mono.just(datasource);
                         }))
                 .collectList()
+                .name(FETCH_ALL_DATASOURCES_WITH_STORAGES)
+                .tap(Micrometer.observation(observationRegistry))
                 .flatMapMany(datasourceList -> {
                     markRecentlyUsed(datasourceList, 3);
                     return Flux.fromIterable(datasourceList);
-                });
+                }));
     }
 
     @Override
@@ -832,6 +836,20 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
                                         .deleteDatasourceContext(datasourceStorage)
                                         .then(datasourceStorageService.archive(datasourceStorage));
                             })
+                            .flatMap(datasourceStorage -> {
+                                if (!StringUtils.hasText(toDelete.getPluginId())) {
+                                    log.error("Plugin id is missing in datasource, skipping pre-delete hook execution");
+                                    return Mono.just(datasourceStorage);
+                                }
+                                Mono<PluginExecutor> pluginExecutorMono = findPluginExecutor(toDelete.getPluginId());
+                                return pluginExecutorMono
+                                        .flatMap(pluginExecutor -> ((PluginExecutor<Object>) pluginExecutor)
+                                                .preDeleteHook(datasourceStorage))
+                                        .onErrorResume(error -> {
+                                            log.error("Error occurred while executing after delete hook", error);
+                                            return Mono.just(datasourceStorage);
+                                        });
+                            })
                             .then(repository.archive(toDelete))
                             .thenReturn(toDelete);
                 })
@@ -841,6 +859,14 @@ public class DatasourceServiceCEImpl implements DatasourceServiceCE {
                     analyticsProperties.put(FieldName.EVENT_DATA, eventData);
                     return analyticsService.sendDeleteEvent(datasource, analyticsProperties);
                 });
+    }
+
+    private Mono<PluginExecutor> findPluginExecutor(String pluginId) {
+        final Mono<Plugin> pluginMono = pluginService.findById(pluginId).cache();
+        return pluginExecutorHelper
+                .getPluginExecutor(pluginMono)
+                .switchIfEmpty(
+                        Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.PLUGIN, pluginId)));
     }
 
     /**

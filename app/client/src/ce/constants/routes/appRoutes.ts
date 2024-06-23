@@ -1,15 +1,26 @@
 // Leaving this require here. The path-to-regexp module has a commonJS version and an ESM one.
 // We are loading the correct one with the typings with our compilerOptions property "moduleResolution" set to "node". Ref: https://stackoverflow.com/questions/59013618/unable-to-find-module-path-to-regexp
 // All solutions from closed issues on their repo have been tried. Ref: https://github.com/pillarjs/path-to-regexp/issues/193
+
+import { matchPath } from "react-router";
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { match } = require("path-to-regexp");
 
+// Regex to extract the id from the URL path which supports both the formats:
+// 1. With Mongo ObjectIds
+// 2. With UUID
+const MONGO_OBJECT_ID_REGEX = "[0-9a-f]{24}";
+const UUID_REGEX =
+  "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const ID_EXTRACTION_REGEX = `(${MONGO_OBJECT_ID_REGEX}|${UUID_REGEX})`;
+
 export const BUILDER_BASE_PATH_DEPRECATED = "/applications";
 export const BUILDER_VIEWER_PATH_PREFIX = "/app/";
-export const BUILDER_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:applicationSlug/:pageSlug(.*\-):pageId/edit`;
-export const BUILDER_CUSTOM_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:customSlug(.*\-):pageId/edit`;
-export const VIEWER_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:applicationSlug/:pageSlug(.*\-):pageId`;
-export const VIEWER_CUSTOM_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:customSlug(.*\-):pageId`;
+export const BUILDER_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:applicationSlug/:pageSlug(.*\-):pageId${ID_EXTRACTION_REGEX}/edit`;
+export const BUILDER_CUSTOM_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:customSlug(.*\-):pageId${ID_EXTRACTION_REGEX}/edit`;
+export const VIEWER_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:applicationSlug/:pageSlug(.*\-):pageId${ID_EXTRACTION_REGEX}`;
+export const VIEWER_CUSTOM_PATH = `${BUILDER_VIEWER_PATH_PREFIX}:customSlug(.*\-):pageId${ID_EXTRACTION_REGEX}`;
 export const getViewerPath = (
   applicationSlug: string,
   pageSlug: string,
@@ -33,6 +44,7 @@ export const WIDGETS_EDITOR_ID_PATH = `${WIDGETS_EDITOR_BASE_PATH}/:widgetIds`;
  */
 export const CUSTOM_WIDGETS_EDITOR_ID_PATH = `${BUILDER_PATH}${WIDGETS_EDITOR_ID_PATH}/builder`;
 export const CUSTOM_WIDGETS_EDITOR_ID_PATH_CUSTOM = `${BUILDER_CUSTOM_PATH}${WIDGETS_EDITOR_ID_PATH}/builder`;
+export const CUSTOM_WIDGETS_DEPRECATED_EDITOR_ID_PATH = `${BUILDER_PATH_DEPRECATED}${WIDGETS_EDITOR_ID_PATH}/builder`;
 /* */
 
 export const API_EDITOR_BASE_PATH = `/api`;
@@ -41,18 +53,21 @@ export const API_EDITOR_ID_ADD_PATH = `${API_EDITOR_BASE_PATH}/:apiId/add`;
 export const API_EDITOR_PATH_WITH_SELECTED_PAGE_ID = `${API_EDITOR_BASE_PATH}?importTo=:importTo`;
 export const QUERIES_EDITOR_BASE_PATH = `/queries`;
 export const ADD_PATH = `/add`;
+export const LIST_PATH = "/list";
+
+export const ENTITY_PATH = "/:entity";
 export const QUERIES_EDITOR_ID_PATH = `${QUERIES_EDITOR_BASE_PATH}/:queryId`;
 export const QUERIES_EDITOR_ADD_PATH = `${QUERIES_EDITOR_BASE_PATH}${ADD_PATH}`;
 export const QUERIES_EDITOR_ID_ADD_PATH = `${QUERIES_EDITOR_BASE_PATH}/:queryId/add`;
 export const JS_COLLECTION_EDITOR_PATH = `/jsObjects`;
 export const JS_COLLECTION_ID_PATH = `${JS_COLLECTION_EDITOR_PATH}/:collectionId`;
+export const JS_COLLECTION_ID_ADD_PATH = `${JS_COLLECTION_EDITOR_PATH}/:collectionId/add`;
 export const CURL_IMPORT_PAGE_PATH = `/api/curl/curl-import`;
 export const DATA_SOURCES_EDITOR_LIST_PATH = `/datasource`;
 export const DATA_SOURCES_EDITOR_ID_PATH = `/datasource/:datasourceId`;
 export const APP_LIBRARIES_EDITOR_PATH = `/libraries`;
 export const APP_SETTINGS_EDITOR_PATH = `/settings`;
 export const SAAS_GSHEET_EDITOR_ID_PATH = `/saas/google-sheets-plugin/datasources/:datasourceId`;
-export const PROVIDER_TEMPLATE_PATH = `/provider/:providerId`;
 export const GEN_TEMPLATE_URL = "generate-page";
 export const GENERATE_TEMPLATE_PATH = `/${GEN_TEMPLATE_URL}`;
 export const GEN_TEMPLATE_FORM_ROUTE = "/form";
@@ -63,18 +78,24 @@ export const ADMIN_SETTINGS_CATEGORY_DEFAULT_PATH = "/settings/general";
 export const ADMIN_SETTINGS_CATEGORY_ACL_PATH = "/settings/groups";
 export const ADMIN_SETTINGS_CATEGORY_AUDIT_LOGS_PATH = "/settings/audit-logs";
 export const ADMIN_SETTINGS_CATEGORY_PATH = "/settings/:category/:selected?";
-export const BUILDER_PATCH_PATH = `/:applicationSlug/:pageSlug(.*\-):pageId/edit`;
-export const VIEWER_PATCH_PATH = `/:applicationSlug/:pageSlug(.*\-):pageId`;
-export const APP_STATE_PATH = `/:appState`;
+export const BUILDER_PATCH_PATH = `/:applicationSlug/:pageSlug(.*\-):pageId${ID_EXTRACTION_REGEX}/edit`;
+export const VIEWER_PATCH_PATH = `/:applicationSlug/:pageSlug(.*\-):pageId${ID_EXTRACTION_REGEX}`;
 
 export const matchApiBasePath = match(API_EDITOR_BASE_PATH);
 export const matchApiPath = match(API_EDITOR_ID_PATH);
-export const matchDatasourcePath = match(
-  `${BUILDER_PATH}${DATA_SOURCES_EDITOR_ID_PATH}`,
-);
-export const matchSAASGsheetsPath = match(
-  `${BUILDER_PATH}${SAAS_GSHEET_EDITOR_ID_PATH}`,
-);
+export const matchDatasourcePath = (pathname: string) =>
+  matchPath(pathname, {
+    path: [`${BUILDER_PATH}${DATA_SOURCES_EDITOR_ID_PATH}`],
+    strict: false,
+    exact: false,
+  });
+
+export const matchSAASGsheetsPath = (pathname: string) =>
+  matchPath(pathname, {
+    path: [`${BUILDER_PATH}${SAAS_GSHEET_EDITOR_ID_PATH}`],
+    strict: false,
+    exact: false,
+  });
 export const matchQueryBasePath = match(QUERIES_EDITOR_BASE_PATH);
 export const matchQueryPath = match(QUERIES_EDITOR_ID_PATH);
 export const matchQueryBuilderPath = match(
@@ -89,7 +110,8 @@ export const matchBuilderPath = (
   match(BUILDER_CUSTOM_PATH, options)(pathName) ||
   match(BUILDER_PATH + WIDGETS_EDITOR_ID_PATH, options)(pathName) ||
   match(BUILDER_CUSTOM_PATH + WIDGETS_EDITOR_ID_PATH, options)(pathName) ||
-  match(BUILDER_PATH_DEPRECATED + WIDGETS_EDITOR_ID_PATH, options)(pathName);
+  match(BUILDER_PATH_DEPRECATED + WIDGETS_EDITOR_ID_PATH, options)(pathName) ||
+  match(BUILDER_PATH + WIDGETS_EDITOR_ID_PATH + ADD_PATH, options)(pathName);
 
 export const matchJSObjectPath = match(JS_COLLECTION_ID_PATH);
 export const matchViewerPath = (pathName: string) =>
@@ -124,11 +146,6 @@ export interface AppViewerRouteParams {
 export interface APIEditorRouteParams {
   pageId: string;
   apiId?: string;
-}
-
-export interface ProviderViewerRouteParams {
-  pageId: string;
-  providerId: string;
 }
 
 export interface QueryEditorRouteParams {

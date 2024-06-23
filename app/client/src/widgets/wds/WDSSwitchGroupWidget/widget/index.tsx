@@ -4,7 +4,7 @@ import BaseWidget from "widgets/BaseWidget";
 import type { WidgetState } from "widgets/BaseWidget";
 import type { SetterConfig } from "entities/AppTheming";
 import type { AnvilConfig } from "WidgetProvider/constants";
-import { Switch, SwitchGroup } from "@design-system/widgets";
+import { Switch, ToggleGroup } from "@design-system/widgets";
 import type { DerivedPropertiesMap } from "WidgetProvider/factory";
 import { EventType } from "constants/AppsmithActionConstants/ActionConstants";
 
@@ -16,7 +16,8 @@ import {
   metaConfig,
   propertyPaneContentConfig,
   settersConfig,
-} from "./../config";
+  methodsConfig,
+} from "../config";
 import { validateInput } from "./helpers";
 import type { SwitchGroupWidgetProps, OptionProps } from "./types";
 
@@ -36,10 +37,6 @@ class WDSSwitchGroupWidget extends BaseWidget<
 
   static getDefaults() {
     return defaultsConfig;
-  }
-
-  static getAutoLayoutConfig() {
-    return {};
   }
 
   static getAnvilConfig(): AnvilConfig | null {
@@ -82,6 +79,10 @@ class WDSSwitchGroupWidget extends BaseWidget<
     };
   }
 
+  static getMethods() {
+    return methodsConfig;
+  }
+
   componentDidUpdate(prevProps: SwitchGroupWidgetProps) {
     if (
       xor(this.props.defaultSelectedValues, prevProps.defaultSelectedValues)
@@ -108,10 +109,11 @@ class WDSSwitchGroupWidget extends BaseWidget<
 
   getWidgetView() {
     const {
+      disableWidgetInteraction,
       labelPosition,
       labelTooltip,
       options,
-      selectedOptionValue,
+      selectedValues,
       widgetId,
       ...rest
     } = this.props;
@@ -119,24 +121,26 @@ class WDSSwitchGroupWidget extends BaseWidget<
     const validation = validateInput(this.props);
 
     return (
-      <SwitchGroup
+      <ToggleGroup
         {...rest}
         contextualHelp={labelTooltip}
         errorMessage={validation.errorMessage}
+        isInvalid={validation.validationStatus === "invalid"}
+        items={options}
         onChange={this.onChange}
-        validationState={validation.validationStatus}
-        value={selectedOptionValue}
+        value={selectedValues}
       >
-        {options.map((option, index) => (
+        {({ index, label, value }) => (
           <Switch
+            excludeFromTabOrder={disableWidgetInteraction}
             key={`${widgetId}-option-${index}`}
             labelPosition={labelPosition}
-            value={option.value}
+            value={value}
           >
-            {option.label}
+            {label}
           </Switch>
-        ))}
-      </SwitchGroup>
+        )}
+      </ToggleGroup>
     );
   }
 }

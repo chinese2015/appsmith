@@ -14,8 +14,6 @@ import com.appsmith.server.dtos.ImportedActionAndCollectionMapsDTO;
 import com.appsmith.server.dtos.LayoutExecutableUpdateDTO;
 import com.appsmith.server.dtos.PluginTypeAndCountDTO;
 import com.appsmith.server.services.CrudService;
-import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.result.InsertManyResult;
 import org.springframework.data.domain.Sort;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
@@ -31,7 +29,9 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
 
     void setCommonFieldsFromActionDTOIntoNewAction(ActionDTO action, NewAction newAction);
 
-    Mono<ActionDTO> generateActionByViewMode(NewAction newAction, Boolean viewMode);
+    Mono<NewAction> findByIdAndBranchName(String id, String branchName);
+
+    ActionDTO generateActionByViewMode(NewAction newAction, Boolean viewMode);
 
     void generateAndSetActionPolicies(NewPage page, NewAction action);
 
@@ -39,16 +39,16 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
 
     Mono<NewAction> validateAction(NewAction newAction);
 
-    Mono<List<InsertManyResult>> bulkValidateAndInsertActionInRepository(List<NewAction> newActionList);
+    Mono<Void> bulkValidateAndInsertActionInRepository(List<NewAction> newActionList);
 
-    Mono<List<BulkWriteResult>> bulkValidateAndUpdateActionInRepository(List<NewAction> newActionList);
+    Mono<Void> bulkValidateAndUpdateActionInRepository(List<NewAction> newActionList);
 
     Mono<NewAction> extractAndSetJsonPathKeys(NewAction newAction);
 
     Mono<ActionDTO> updateUnpublishedAction(String id, ActionDTO action);
 
     Mono<Tuple2<ActionDTO, NewAction>> updateUnpublishedActionWithoutAnalytics(
-            String id, ActionDTO action, Optional<AclPermission> permission);
+            String id, ActionDTO action, AclPermission permission);
 
     Mono<ActionDTO> findByUnpublishedNameAndPageId(String name, String pageId, AclPermission permission);
 
@@ -84,6 +84,8 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
 
     Mono<ActionDTO> deleteUnpublishedAction(String id);
 
+    Mono<ActionDTO> deleteUnpublishedAction(String id, AclPermission newActionDeletePermission);
+
     Flux<ActionDTO> getUnpublishedActions(MultiValueMap<String, String> params, Boolean includeJsActions);
 
     Flux<ActionDTO> getUnpublishedActions(
@@ -91,7 +93,11 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
 
     Flux<ActionDTO> getUnpublishedActions(MultiValueMap<String, String> params);
 
+    Flux<ActionDTO> getUnpublishedActionsByPageId(String pageId, AclPermission permission);
+
     Flux<ActionDTO> getUnpublishedActions(MultiValueMap<String, String> params, String branchName);
+
+    Mono<ActionDTO> deleteGivenNewAction(NewAction toDelete);
 
     Mono<ActionDTO> populateHintMessages(ActionDTO action);
 
@@ -100,6 +106,8 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
     Flux<NewAction> saveAll(List<NewAction> actions);
 
     Flux<NewAction> findByPageId(String pageId);
+
+    Mono<NewAction> archiveGivenNewAction(NewAction toDelete);
 
     Mono<NewAction> archive(NewAction newAction);
 
@@ -122,7 +130,7 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
     Flux<ActionDTO> getUnpublishedActionsExceptJs(MultiValueMap<String, String> params, String branchName);
 
     Mono<NewAction> findByBranchNameAndDefaultActionId(
-            String branchName, String defaultActionId, AclPermission permission);
+            String branchName, String defaultActionId, Boolean viewMode, AclPermission permission);
 
     Mono<String> findBranchedIdByBranchNameAndDefaultActionId(
             String branchName, String defaultActionId, AclPermission permission);
@@ -133,13 +141,11 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
 
     Map<String, Object> getAnalyticsProperties(NewAction savedAction);
 
-    void populateDefaultResources(NewAction newAction, NewAction branchedAction, String branchName);
-
     Mono<ImportedActionAndCollectionMapsDTO> updateActionsWithImportedCollectionIds(
             ImportActionCollectionResultDTO importActionCollectionResultDTO,
             ImportActionResultDTO importActionResultDTO);
 
-    Mono<List<BulkWriteResult>> publishActions(String applicationId, AclPermission permission);
+    Mono<Void> publishActions(String applicationId, AclPermission permission);
 
     Flux<PluginTypeAndCountDTO> countActionsByPluginType(String applicationId);
 
@@ -159,4 +165,6 @@ public interface NewActionServiceCE extends CrudService<NewAction, String> {
     void updateDefaultResourcesInAction(NewAction newAction);
 
     Mono<Void> saveLastEditInformationInParent(ActionDTO actionDTO);
+
+    Flux<NewAction> findByCollectionIdAndViewMode(String collectionId, boolean viewMode, AclPermission aclPermission);
 }

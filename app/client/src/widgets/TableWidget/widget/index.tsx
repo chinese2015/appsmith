@@ -460,7 +460,7 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
         },
         setData: {
           path: "tableData",
-          type: "object",
+          type: "array",
         },
       },
     };
@@ -764,8 +764,8 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
                   isString(value) || isNumber(value)
                     ? value
                     : isNil(value)
-                    ? ""
-                    : JSON.stringify(value);
+                      ? ""
+                      : JSON.stringify(value);
                 tableRow[accessor] = data;
                 break;
             }

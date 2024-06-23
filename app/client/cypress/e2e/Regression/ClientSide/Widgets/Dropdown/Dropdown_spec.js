@@ -1,4 +1,3 @@
-const explorer = require("../../../../../locators/explorerlocators.json");
 const formWidgetsPage = require("../../../../../locators/FormWidgets.json");
 const commonlocators = require("../../../../../locators/commonlocators.json");
 const publish = require("../../../../../locators/publishWidgetspage.json");
@@ -13,7 +12,6 @@ describe(
     });
 
     it("Add new dropdown widget", () => {
-      cy.get(explorer.addWidget).click();
       cy.dragAndDropToCanvas("selectwidget", { x: 300, y: 300 });
       cy.get(".t--widget-selectwidget").should("exist");
     });
@@ -155,7 +153,7 @@ describe(
     it("Dropdown Functionality To Check disabled Widget", function () {
       cy.openPropertyPane("selectwidget");
       // Disable the visible JS
-      cy.togglebarDisable(commonlocators.visibleCheckbox);
+      _.agHelper.CheckUncheck(commonlocators.visibleCheckbox, false);
       _.deployMode.DeployApp();
       // Verify the disabled visible JS
       cy.get(publish.selectwidget + " " + "input").should("not.exist");
@@ -165,7 +163,7 @@ describe(
     it("Dropdown Functionality To UnCheck disabled Widget", function () {
       cy.openPropertyPane("selectwidget");
       // Check the visible JS
-      cy.togglebar(commonlocators.visibleCheckbox);
+      _.agHelper.CheckUncheck(commonlocators.visibleCheckbox);
       _.deployMode.DeployApp();
       // Verify the checked visible JS
       cy.get(publish.selectwidget).should("exist");
