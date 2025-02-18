@@ -6,6 +6,8 @@ import com.appsmith.external.models.AuthenticationDTO;
 import com.appsmith.server.configurations.mongo.SoftDeleteMongoRepositoryFactoryBean;
 import com.appsmith.server.converters.StringToInstantConverter;
 import com.appsmith.server.repositories.BaseRepositoryImpl;
+import com.appsmith.server.x.configurations.mongo.CustomMongoTemplate;
+import com.appsmith.server.x.configurations.mongo.CustomReactiveMongoTemplate;
 import com.github.cloudyrock.mongock.ChangeLog;
 import com.github.cloudyrock.mongock.ChangeSet;
 import com.google.common.collect.ImmutableSet;
@@ -217,8 +219,11 @@ public class MongoConfig {
 
     @Bean
     public ReactiveMongoTemplate reactiveMongoTemplate(
-            ReactiveMongoDatabaseFactory mongoDbFactory, MappingMongoConverter mappingMongoConverter) {
-        ReactiveMongoTemplate mongoTemplate = new ReactiveMongoTemplate(mongoDbFactory, mappingMongoConverter);
+            ReactiveMongoDatabaseFactory mongoDbFactory,
+            MappingMongoConverter mappingMongoConverter,
+            MongoProperties mongoProperties) {
+        CustomReactiveMongoTemplate mongoTemplate =
+                new CustomReactiveMongoTemplate(mongoDbFactory, mappingMongoConverter, mongoProperties);
         MappingMongoConverter conv = (MappingMongoConverter) mongoTemplate.getConverter();
         // tell mongodb to use the custom converters
         conv.setCustomConversions(mongoCustomConversions());
@@ -228,12 +233,19 @@ public class MongoConfig {
 
     @Bean
     public MongoTemplate mongoTemplate(
-            MongoDatabaseFactory mongoDbFactory, MappingMongoConverter mappingMongoConverter) {
-        MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, mappingMongoConverter);
+            MongoDatabaseFactory mongoDbFactory,
+            MappingMongoConverter mappingMongoConverter,
+            MongoProperties mongoProperties) { // add MongoProperties
+
+        // create custom MongoTemplate
+        CustomMongoTemplate mongoTemplate =
+                new CustomMongoTemplate(mongoDbFactory, mappingMongoConverter, mongoProperties);
+
+        // keep original converter config
         MappingMongoConverter conv = (MappingMongoConverter) mongoTemplate.getConverter();
-        // tell mongodb to use the custom converters
         conv.setCustomConversions(mongoCustomConversions());
         conv.afterPropertiesSet();
+
         return mongoTemplate;
     }
 
