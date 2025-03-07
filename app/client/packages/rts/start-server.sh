@@ -3,8 +3,9 @@
 set -o errexit
 
 cd "$(dirname "$0")"
-./build.sh
+#./build.sh
 
 set -o allexport
 source .env
-exec node --require source-map-support/register dist/bundle/server.js
+#exec node --require source-map-support/register dist/bundle/server.js
+exec node dist/bundle/server.js
