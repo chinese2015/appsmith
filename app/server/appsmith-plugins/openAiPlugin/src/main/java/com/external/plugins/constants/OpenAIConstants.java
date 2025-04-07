@@ -5,7 +5,7 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 public class OpenAIConstants {
 
     // Endpoints
-    public static final String OPEN_AI_HOST = "https://api.openai.com";
+    public static final String OPEN_AI_HOST = "https://dashscope.aliyuncs.com/compatible-mode";
     public static final String MODELS_ENDPOINT = "/v1/models";
     public static final String CHAT_ENDPOINT = "/v1/chat/completions";
     public static final String VISION_ENDPOINT = "/v1/chat/completions";

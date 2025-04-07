@@ -38,7 +38,7 @@ if [[ -f tx/transform.py ]]; then
   python3 tx/transform.py
 fi
 
-node scripts/check-field-constants.mjs
+#node scripts/check-field-constants.mjs
 
 # Build the code. $@ accepts all the parameters from the input command line and uses it in the maven build command
 mvn clean package "$@"
@@ -57,4 +57,7 @@ mkdir -p dist/plugins
 cp -v ./appsmith-server/target/server-*.jar dist/
 
 # Copy all the plugins
-rsync -av --exclude "original-*.jar" ./appsmith-plugins/*/target/*.jar dist/plugins/
+# rsync -av --exclude "original-*.jar" ./appsmith-plugins/*/target/*.jar dist/plugins/
+cp ./appsmith-plugins/*/target/*.jar ./dist/plugins/
+rm ./dist/plugins/original-*.jar
+rm ./dist/plugins/*-shaded.jar

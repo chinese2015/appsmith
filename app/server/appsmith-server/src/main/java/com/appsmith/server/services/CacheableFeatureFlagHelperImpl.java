@@ -2,6 +2,7 @@ package com.appsmith.server.services;
 
 import com.appsmith.server.configurations.CloudServicesConfig;
 import com.appsmith.server.configurations.CommonConfig;
+import com.appsmith.server.configurations.FeatureFlagOverrideConfig;
 import com.appsmith.server.repositories.TenantRepository;
 import com.appsmith.server.services.ce.CacheableFeatureFlagHelperCEImpl;
 import com.appsmith.server.solutions.ReleaseNotesService;
@@ -18,13 +19,15 @@ public class CacheableFeatureFlagHelperImpl extends CacheableFeatureFlagHelperCE
             CloudServicesConfig cloudServicesConfig,
             CommonConfig commonConfig,
             UserIdentifierService userIdentifierService,
-            ReleaseNotesService releaseNotesService) {
+            ReleaseNotesService releaseNotesService,
+            FeatureFlagOverrideConfig featureFlagOverrideConfig) {
         super(
                 tenantRepository,
                 configService,
                 cloudServicesConfig,
                 commonConfig,
                 userIdentifierService,
-                releaseNotesService);
+                releaseNotesService,
+            featureFlagOverrideConfig);
     }
 }

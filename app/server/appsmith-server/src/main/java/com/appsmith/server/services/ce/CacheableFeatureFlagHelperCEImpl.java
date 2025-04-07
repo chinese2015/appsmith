@@ -4,6 +4,7 @@ import com.appsmith.caching.annotations.Cache;
 import com.appsmith.caching.annotations.CacheEvict;
 import com.appsmith.server.configurations.CloudServicesConfig;
 import com.appsmith.server.configurations.CommonConfig;
+import com.appsmith.server.configurations.FeatureFlagOverrideConfig;
 import com.appsmith.server.domains.Tenant;
 import com.appsmith.server.domains.User;
 import com.appsmith.server.dtos.FeaturesRequestDTO;
@@ -50,6 +51,7 @@ public class CacheableFeatureFlagHelperCEImpl implements CacheableFeatureFlagHel
     private final CommonConfig commonConfig;
     private final UserIdentifierService userIdentifierService;
     private final ReleaseNotesService releaseNotesService;
+    private final FeatureFlagOverrideConfig featureFlagOverrideConfig;
 
     @Cache(cacheName = "featureFlag", key = "{#userIdentifier}")
     @Override
@@ -119,7 +121,16 @@ public class CacheableFeatureFlagHelperCEImpl implements CacheableFeatureFlagHel
                             objects.getT1(), tenantId, Set.of(userIdentifier), objects.getT3(), appsmithVersion);
                     return this.getRemoteFeatureFlagsByIdentity(featureFlagIdentityTraits);
                 })
-                .map(newValue -> ObjectUtils.defaultIfNull(newValue.get(userIdentifier), Map.of()));
+                .map(newValue -> {
+                    Map<String, Boolean> flags = ObjectUtils.defaultIfNull(newValue.get(userIdentifier), new HashMap<>());
+                    // Apply overrides from configuration
+                    if (featureFlagOverrideConfig.getOverrides() != null) {
+                        flags.putAll(featureFlagOverrideConfig.getOverrides());
+                    }
+                    flags.put("release_custom_widget_ai_builder",true);
+                    flags.put("ab_appsmith_ai_query",true);
+                    return flags;
+                });
     }
 
     /**

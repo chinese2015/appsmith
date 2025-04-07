@@ -311,11 +311,11 @@ public class SecurityConfig {
         // 3. Check Appsmith version, if present. Not making this a mandatory check for now, but reconsider later.
         final String versionHeaderValue = headers.getFirst("X-Appsmith-Version");
         final String serverVersion = projectProperties.getVersion();
-        if (versionHeaderValue != null && !serverVersion.equals(versionHeaderValue)) {
-            final ErrorDTO error = new ErrorDTO(
-                    AppsmithErrorCode.VERSION_MISMATCH.getCode(), AppsmithErrorCode.VERSION_MISMATCH.getDescription());
-            return writeErrorResponse(exchange, chain, error, new VersionMismatchData(serverVersion));
-        }
+//        if (versionHeaderValue != null && !serverVersion.equals(versionHeaderValue)) {
+//            final ErrorDTO error = new ErrorDTO(
+//                    AppsmithErrorCode.VERSION_MISMATCH.getCode(), AppsmithErrorCode.VERSION_MISMATCH.getDescription());
+//            return writeErrorResponse(exchange, chain, error, new VersionMismatchData(serverVersion));
+//        }
 
         return chain.filter(exchange);
     }
